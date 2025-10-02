@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 720" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="skin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F4D5B4" />
+      <stop offset="100%" stop-color="#E6B88F" />
+    </linearGradient>
+    <linearGradient id="robe" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#604B3B" />
+      <stop offset="100%" stop-color="#2B3F6C" />
+    </linearGradient>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FBE7BA" />
+      <stop offset="100%" stop-color="#D0BF98" />
+    </linearGradient>
+  </defs>
+  <rect width="480" height="720" fill="url(#bg)" />
+  <ellipse cx="240" cy="640" rx="220" ry="100" fill="#C5AE84" opacity="0.65" />
+  <path d="M240 140c68 0 120 52 120 128v56c0 76-52 128-120 128s-120-52-120-128v-56c0-76 52-128 120-128z" fill="url(#skin)" />
+  <circle cx="192" cy="264" r="18" fill="#4C3A2C" />
+  <circle cx="288" cy="264" r="18" fill="#4C3A2C" />
+  <path d="M188 330c16 20 48 32 100 12" stroke="#4C3A2C" stroke-width="12" stroke-linecap="round" fill="none" />
+  <path d="M240 420c92 0 160 84 160 220H80c0-136 68-220 160-220z" fill="url(#robe)" />
+  <path d="M140 148c28-52 76-84 100-84s72 32 100 84" stroke="#4C3A2C" stroke-width="22" stroke-linecap="round" fill="none" />
+</svg>
