@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 interface CartItem {
@@ -12,6 +13,7 @@ interface CartItem {
 }
 
 export default function CartPage() {
+  const router = useRouter();
   const [cartItems, setCartItems] = useState<CartItem[]>([
     {
       id: 1,
@@ -237,7 +239,11 @@ export default function CartPage() {
                 </span>
               </div>
 
-              <button className="bg-[#604B3B] text-white px-12 py-4 rounded-lg text-xl font-normal hover:bg-[#4a3a2d] transition-colors">
+              <button
+                onClick={() => router.push('/checkout')}
+                className="bg-[#604B3B] text-white px-12 py-4 rounded-lg text-xl font-normal hover:bg-[#4a3a2d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={selectedItems.length === 0}
+              >
                 Mua Hàng
               </button>
             </div>
