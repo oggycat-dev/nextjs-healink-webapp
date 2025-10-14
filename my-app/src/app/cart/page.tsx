@@ -1,10 +1,5 @@
-import CartPage from "@/components/CartPage";
-import Layout from "@/components/Layout";
+import { redirect } from "next/navigation";
 
-export default function Cart() {
-  return (
-    <Layout showSearch={true}>
-      <CartPage />
-    </Layout>
-  );
+export default function CartPage() {
+  redirect("/subscription");
 }

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 const mindfulHighlights = [
   {
@@ -37,76 +38,97 @@ const communityHighlights = [
 const planFeatures = [
   { key: "podcast", label: "Nghe podcast" },
   { key: "noAds", label: "Không quảng cáo" },
-  { key: "flashcard", label: "Flashcard to podcast" },
-  { key: "journal", label: "Viết thư - nhật kí cảm xúc" },
-  { key: "personal", label: "Đang tải podcast cá nhân" },
+  { key: "flashcard", label: "Flashcard" },
+  { key: "journal", label: "Viết nhật ký" },
+  { key: "offline", label: "Tải offline" },
+  { key: "hd", label: "Chất lượng HD" },
+  { key: "exclusive", label: "Nội dung độc quyền" },
+  { key: "personal", label: "Podcast cá nhân" },
 ];
 
 const plans = [
   {
-    name: "Trải nghiệm",
-    priceLabel: "Miễn phí",
-    price: "Dùng thử",
+    name: "Yearly Premium",
+    priceLabel: "Yearly Premium for user",
+    price: "200.000đ",
+    period: "/12 năm",
     accent: {
-      background: "bg-white/60 backdrop-blur-xl border-2 border-white/40",
-      text: "text-[#1E1E1E]",
-      shadow: "shadow-[0_18px_40px_rgba(0,0,0,0.1)]",
-      cta: "border-2 border-[#1E1E1E] text-[#1E1E1E] hover:bg-[#1E1E1E] hover:text-white",
+      background: "bg-white",
+      text: "text-black",
+      shadow: "shadow-[0_15px_40px_rgba(130,107,57,0.15)]",
+      cta: "bg-[#826B39] text-white hover:bg-[#6d572f]",
+      button: "ĐĂNG KÝ NGAY",
+    },
+    features: {
+      podcast: false,
+      noAds: false,
+      flashcard: false,
+      journal: false,
+      offline: false,
+      hd: false,
+      exclusive: false,
+      personal: false,
+    },
+  },
+  {
+    name: "Premium",
+    priceLabel: "Premium plan with advanced features",
+    price: "9,99đ",
+    period: "/tháng",
+    trial: "Dùng thử 7 ngày miễn phí",
+    accent: {
+      background: "bg-[#6D5A47]",
+      text: "text-white",
+      shadow: "shadow-[0_25px_50px_rgba(0,0,0,0.25)]",
+      cta: "bg-white text-[#604B3B] hover:bg-[#FBE7BA]",
+      button: "ĐĂNG KÝ NGAY",
+    },
+    features: {
+      podcast: false,
+      noAds: false,
+      flashcard: false,
+      journal: false,
+      offline: false,
+      hd: false,
+      exclusive: false,
+      personal: false,
+    },
+  },
+  {
+    name: "Free",
+    priceLabel: "Free plan with basic features",
+    price: "Miễn phí",
+    period: "",
+    accent: {
+      background: "bg-[#D4C3A3]",
+      text: "text-black",
+      shadow: "shadow-[0_15px_40px_rgba(130,107,57,0.15)]",
+      cta: "bg-[#826B39] text-white hover:bg-[#6d572f]",
+      button: "BẮT ĐẦU MIỄN PHÍ",
     },
     features: {
       podcast: true,
       noAds: false,
       flashcard: false,
       journal: false,
+      offline: false,
+      hd: false,
+      exclusive: false,
       personal: false,
-    },
-  },
-  {
-    name: "Căn bản",
-    priceLabel: "49.000đ / tháng",
-    price: "Mua gói này",
-    accent: {
-      background: "bg-[#604B3B]/95 backdrop-blur-xl border-2 border-[#604B3B]/30",
-      text: "text-white",
-      shadow: "shadow-[0_18px_40px_rgba(96,75,59,0.3)]",
-      cta: "bg-white text-[#604B3B] hover:bg-gray-100",
-    },
-    features: {
-      podcast: true,
-      noAds: true,
-      flashcard: true,
-      journal: false,
-      personal: false,
-    },
-  },
-  {
-    name: "Cao cấp",
-    priceLabel: "89.000đ / tháng",
-    price: "Mua gói này",
-    accent: {
-      background: "bg-[#D0BF98]/90 backdrop-blur-xl border-2 border-white/50",
-      text: "text-[#1E1E1E]",
-      shadow: "shadow-[0_18px_40px_rgba(208,191,152,0.4)]",
-      cta: "bg-[#1E1E1E] text-white hover:bg-[#333]",
-    },
-    features: {
-      podcast: true,
-      noAds: true,
-      flashcard: true,
-      journal: true,
-      personal: true,
     },
   },
 ];
 
-const iconMap = {
-  check: "/icons/check.svg",
-  close: "/icons/close.svg",
+const utilityIcons = {
+  cart: "/icons/cart.svg",
+  bag: "/icons/bag.svg",
+  user: "/icons/user.svg",
+  search: "/icons/search.svg",
 };
 
 export default function HomepageContent() {
   return (
-    <>
+    <main className="flex-1">
       <section
         id="hero"
         className="relative isolate overflow-hidden bg-[#5A452F] text-white"
@@ -147,121 +169,142 @@ export default function HomepageContent() {
               Healink là không gian an yên, nơi mỗi người được lắng nghe, thực hành chánh niệm và tìm lại sự cân bằng cảm xúc thông qua podcast, postcard và các hoạt động cộng đồng.
             </p>
             <div className="pt-2">
-              <a
-                href="#podcast"
-                className="inline-flex items-center justify-center rounded-full bg-[#826B39] px-8 py-3 text-sm font-semibold uppercase tracking-widest text-white shadow-[0_4px_20px_rgba(0,0,0,0.25)] transition-transform duration-200 hover:-translate-y-0.5 hover:bg-[#6d572f] sm:text-base"
+              <Link
+                href="/podcast"
+                className="inline-flex items-center rounded-full bg-white px-8 py-3 text-base font-semibold text-[#604B3B] transition-all hover:bg-[#FBE7BA] hover:shadow-lg"
               >
                 Nghe ngay
-              </a>
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="bg-[#BFAC83] py-12" id="podcast">
-        <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-8 px-6">
-          <div className="grid gap-6 md:grid-cols-3">
+      <section id="mindful" className="bg-white py-20">
+        <div className="mx-auto w-full max-w-[1440px] px-6">
+          <h2 className="mb-12 text-center text-3xl font-bold text-[#000000] sm:text-4xl">
+            Chánh niệm mỗi ngày
+          </h2>
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             {mindfulHighlights.map((item, index) => (
-              <article
-                key={`${item.title}-${index}`}
-                className="flex flex-col items-center rounded-3xl bg-white/30 backdrop-blur-xl px-8 py-6 text-center shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-white/40 hover:bg-white/40 transition-all duration-300 hover:shadow-[0_12px_40px_rgba(0,0,0,0.2)] hover:-translate-y-1"
+              <div
+                key={index}
+                className="flex flex-col items-center gap-4 rounded-3xl bg-[#FBE7BA] p-8 text-center shadow-md transition-transform hover:scale-105"
               >
-                <h2 className="text-lg font-semibold uppercase tracking-[0.3em] text-[#2B3F6C]">
-                  {item.title}
-                </h2>
-                <p className="mt-2 text-sm text-[#1E1E1E] sm:text-base">
-                  {item.description}
-                </p>
-              </article>
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white">
+                  <svg className="h-8 w-8 text-[#604B3B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-[#604B3B]">{item.title}</h3>
+                <p className="text-sm font-light text-[#826B39]">{item.description}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="bg-[#FBE7BA] py-16" id="about">
-        <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-10 px-6 text-center">
-          <div className="space-y-4">
-            <h2 className="text-2xl font-extrabold text-[#1E1E1E] sm:text-3xl md:text-4xl">
-              Tham gia cộng đồng Healink và kết nối với những người đồng hành
-            </h2>
-            <p className="text-sm text-[#1E1E1E]/80 sm:text-base">
-              Một cộng đồng biết lắng nghe, thấu hiểu và chia sẻ những hành trình chữa lành chân thành.
-            </p>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {communityHighlights.map((item) => (
-              <article
-                key={item.title}
-                className="flex h-full flex-col justify-between rounded-[38px] bg-[#D0BF98] px-6 py-8 text-left shadow-[0_18px_40px_rgba(0,0,0,0.15)]"
+      <section id="community" className="bg-[#F7F2F2] py-20">
+        <div className="mx-auto w-full max-w-[1440px] px-6">
+          <h2 className="mb-12 text-center text-3xl font-bold text-[#000000] sm:text-4xl">
+            Cộng đồng chữa lành
+          </h2>
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {communityHighlights.map((item, index) => (
+              <div
+                key={index}
+                className="flex flex-col items-center gap-4 rounded-3xl bg-white p-6 text-center shadow-md transition-transform hover:scale-105"
               >
-                <div className="space-y-3">
-                  <h3 className="text-xl font-semibold text-[#1E1E1E]">
-                    {item.title}
-                  </h3>
-                  <p className="text-sm text-[#1E1E1E]/80">
-                    {item.description}
-                  </p>
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#B99B5C]">
+                  {index === 0 && (
+                    <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    </svg>
+                  )}
+                  {index === 1 && (
+                    <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                    </svg>
+                  )}
+                  {index === 2 && (
+                    <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  )}
+                  {index === 3 && (
+                    <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  )}
                 </div>
-                <span className="mt-6 inline-flex text-sm font-semibold uppercase tracking-[0.3em] text-[#604B3B]">
-                  Khám phá
-                </span>
-              </article>
+                <h3 className="text-lg font-semibold text-[#604B3B]">{item.title}</h3>
+                <p className="text-sm font-light text-[#826B39]">{item.description}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-20" id="plans">
-        <div className="mx-auto flex w-full max-w-[1380px] flex-col gap-10 px-6">
-          <div className="text-center">
-            <h2 className="text-2xl font-black text-[#1E1E1E] sm:text-3xl md:text-[32px]">
-              Chọn gói đăng ký của bạn
-            </h2>
-          </div>
-          <div className="grid gap-8 lg:grid-cols-3">
-            {plans.map((plan) => (
-              <article
-                key={plan.name}
-                className={`flex h-full flex-col justify-between rounded-[40px] p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_25px_50px_rgba(0,0,0,0.2)] ${plan.accent.background} ${plan.accent.text} ${plan.accent.shadow}`}
+      <section id="pricing" className="bg-white py-20">
+        <div className="mx-auto w-full max-w-[1440px] px-6">
+          <h2 className="mb-4 text-center text-3xl font-bold text-[#000000] sm:text-4xl">
+            Chọn gói phù hợp
+          </h2>
+          <p className="mb-12 text-center text-base font-light text-[#826B39]">
+            Trải nghiệm Healink theo cách của bạn
+          </p>
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            {plans.map((plan, index) => (
+              <div
+                key={index}
+                className={`flex flex-col gap-6 rounded-3xl p-8 ${plan.accent.background} ${plan.accent.text} ${plan.accent.shadow} transition-transform hover:scale-105`}
               >
-                <div className="space-y-2">
-                  <h3 className="text-xl font-black uppercase">{plan.name}</h3>
-                  <p className="text-2xl font-light leading-tight sm:text-[28px]">
-                    {plan.priceLabel}
-                  </p>
+                <div className="text-center">
+                  <h3 className="mb-2 text-2xl font-bold">{plan.name}</h3>
+                  <p className="text-sm font-medium opacity-80">{plan.priceLabel}</p>
+                  <div className="mt-4 flex items-baseline justify-center">
+                    <span className="text-3xl font-extrabold">{plan.price}</span>
+                    {plan.period && <span className="text-lg ml-1">{plan.period}</span>}
+                  </div>
+                  {plan.trial && (
+                    <p className="mt-2 text-sm opacity-90">{plan.trial}</p>
+                  )}
                 </div>
-                <ul className="mt-6 space-y-4 text-sm sm:text-base">
+                <ul className="flex-1 space-y-3">
                   {planFeatures.map((feature) => {
-                    const available = plan.features[feature.key as keyof typeof plan.features];
-
+                    const hasFeature = plan.features[feature.key as keyof typeof plan.features];
                     return (
-                      <li key={`${plan.name}-${feature.key}`} className="flex items-center gap-3">
-                        <Image
-                          src={available ? iconMap.check : iconMap.close}
-                          alt={available ? "Tính năng khả dụng" : "Tính năng chưa khả dụng"}
-                          width={20}
-                          height={20}
-                        />
-                        <span className={`font-medium ${available ? "" : "opacity-80"}`}>
-                          {feature.label}
+                      <li 
+                        key={feature.key} 
+                        className={`flex items-center gap-3 text-sm ${!hasFeature ? 'opacity-50 line-through' : ''}`}
+                      >
+                        <span className="flex h-5 w-5 items-center justify-center">
+                          {hasFeature ? (
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          ) : (
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          )}
                         </span>
+                        <span>{feature.label}</span>
                       </li>
                     );
                   })}
                 </ul>
-                <div className="pt-8">
-                  <a
-                    href="#register"
-                    className={`inline-flex items-center justify-center rounded-full px-7 py-3 text-sm font-semibold uppercase tracking-widest transition-colors duration-200 ${plan.accent.cta}`}
-                  >
-                    {plan.price}
-                  </a>
-                </div>
-              </article>
+                <Link
+                  href="/subscription"
+                  className={`rounded-full py-3 text-center font-semibold uppercase tracking-wider transition-colors ${plan.accent.cta}`}
+                >
+                  {plan.accent.button}
+                </Link>
+              </div>
             ))}
           </div>
         </div>
       </section>
-    </>
+    </main>
   );
 }

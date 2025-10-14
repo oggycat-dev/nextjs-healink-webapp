@@ -1,12 +1,15 @@
+"use client";
+
 import Image from "next/image";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 const navLinks = [
   { name: "Trang chủ", href: "/" },
   { name: "Podcast", href: "/podcast" },
   { name: "Về chúng tôi", href: "/about" },
-  { name: "Cửa hàng", href: "#store" },
-  { name: "Giỏ hàng", href: "/cart", icon: "cart" },
-  { name: "Tài khoản", href: "/auth", icon: "user" },
+  { name: "Gói đăng ký", href: "/subscription" },
 ];
 
 const footerColumns = [
@@ -44,16 +47,28 @@ interface LayoutProps {
 }
 
 export default function Layout({ children, showSearch = true }: LayoutProps) {
+  const { isAuthenticated, user, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-white text-black">
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 shadow-sm border-b border-white/20">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 shadow-sm border-b border-white/20 liquid-glass-header">
         <div className="bg-[#604B3B]/95 backdrop-blur-md py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.3em] text-white sm:text-xs">
           Hành trình của cảm xúc
         </div>
 
         <div className="mx-auto w-full max-w-[1440px] px-6 py-3">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <a href="/" className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-3">
               <div className="hidden h-[60px] w-[60px] items-center justify-center rounded-xl bg-white lg:flex shadow-sm">
                 <Image src="/icons/logo.png" alt="Healink logo" width={45} height={45} />
               </div>
@@ -65,17 +80,17 @@ export default function Layout({ children, showSearch = true }: LayoutProps) {
                   Nuôi dưỡng cảm xúc mỗi ngày
                 </p>
               </div>
-            </a>
+            </Link>
 
             <nav className="flex flex-wrap items-center justify-center gap-3 text-xs font-medium text-[#000000] sm:gap-4 sm:text-sm lg:text-base">
               {navLinks.map((link) => (
-                <a
+                <Link
                   key={link.name}
                   href={link.href}
                   className="transition-colors duration-200 hover:text-[#826B39]"
                 >
                   {link.name}
-                </a>
+                </Link>
               ))}
             </nav>
 
@@ -91,18 +106,71 @@ export default function Layout({ children, showSearch = true }: LayoutProps) {
                 </form>
               )}
               <div className="flex items-center justify-end gap-3 text-xs font-medium sm:text-sm">
-                <a href="#store" className="flex items-center gap-1.5 text-right">
-                  <span>Cửa hàng</span>
-                  <Image src={utilityIcons.cart} alt="Cửa hàng" width={22} height={22} />
-                </a>
-                <a href="/cart" className="flex items-center gap-1.5 text-right">
-                  <span>Giỏ hàng</span>
-                  <Image src={utilityIcons.bag} alt="Giỏ hàng" width={22} height={22} />
-                </a>
-                <a href="/auth" className="flex items-center gap-1.5 text-right">
-                  <span>Tài khoản</span>
-                  <Image src={utilityIcons.user} alt="Tài khoản" width={22} height={22} />
-                </a>
+                <Link href="/subscription" className="flex items-center gap-1.5 text-right">
+                  <span>Đăng ký</span>
+                  <Image src={utilityIcons.cart} alt="Đăng ký" width={22} height={22} />
+                </Link>
+                <Link href="/podcast" className="flex items-center gap-1.5 text-right">
+                  <span>Podcast</span>
+                  <Image src={utilityIcons.bag} alt="Podcast" width={22} height={22} />
+                </Link>
+                
+                {isAuthenticated && user ? (
+                  <div className="relative group">
+                    <button className="flex items-center gap-1.5 text-right hover:text-[#826B39] transition-colors">
+                      <span className="max-w-[100px] truncate">{user.fullName || user.email}</span>
+                      <Image src={utilityIcons.user} alt="Tài khoản" width={22} height={22} />
+                    </button>
+                    
+                    {/* Dropdown menu */}
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-[#604B3B]/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                      <div className="p-3 border-b border-[#604B3B]/10">
+                        <p className="font-semibold text-[#604B3B] truncate">{user.fullName}</p>
+                        <p className="text-xs text-[#604B3B]/70 truncate">{user.email}</p>
+                      </div>
+                      <div className="py-2">
+                        <Link
+                          href="/profile"
+                          className="block px-4 py-2 text-sm text-[#604B3B] hover:bg-[#FBE7BA]/30 transition-colors"
+                        >
+                          Tài khoản của tôi
+                        </Link>
+                        <Link
+                          href="/orders"
+                          className="block px-4 py-2 text-sm text-[#604B3B] hover:bg-[#FBE7BA]/30 transition-colors"
+                        >
+                          Đơn hàng của tôi
+                        </Link>
+                        <Link
+                          href="/subscription"
+                          className="block px-4 py-2 text-sm text-[#604B3B] hover:bg-[#FBE7BA]/30 transition-colors"
+                        >
+                          Gói đăng ký
+                        </Link>
+                        {/* Temporarily show for all authenticated users */}
+                        {isAuthenticated && (
+                          <Link
+                            href="/creator/dashboard"
+                            className="block px-4 py-2 text-sm text-[#604B3B] font-semibold hover:bg-[#FBE7BA]/30 transition-colors border-t border-[#D0BF98]/50 mt-2 pt-2"
+                          >
+                            🎙️ Quản lý nội dung của tôi
+                          </Link>
+                        )}
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          Đăng xuất
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <Link href="/auth" className="flex items-center gap-1.5 text-right hover:text-[#826B39] transition-colors">
+                    <span>Đăng nhập</span>
+                    <Image src={utilityIcons.user} alt="Tài khoản" width={22} height={22} />
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -117,7 +185,7 @@ export default function Layout({ children, showSearch = true }: LayoutProps) {
         <div className="mx-auto w-full max-w-[1440px] px-6">
           <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex flex-col items-center gap-6 text-center lg:items-start lg:text-left">
-              <a href="/" className="flex items-center gap-4">
+              <Link href="/" className="flex items-center gap-4">
                 <div className="h-16 w-16 rounded-2xl bg-white flex items-center justify-center shadow-sm">
                   <Image src="/icons/healink-chain-logo.svg" alt="Healink logo" width={45} height={45} />
                 </div>
@@ -129,7 +197,7 @@ export default function Layout({ children, showSearch = true }: LayoutProps) {
                     Nuôi dưỡng cảm xúc mỗi ngày
                   </p>
                 </div>
-              </a>
+              </Link>
               <p className="max-w-[300px] text-sm leading-6 text-black/80">
                 Healink là không gian an yên, nơi mỗi người được lắng nghe, thực hành chánh niệm và tìm lại sự cân bằng cảm xúc thông qua podcast, postcard và các hoạt động cộng đồng.
               </p>

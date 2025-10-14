@@ -1,10 +1,5 @@
-import Layout from "@/components/Layout";
-import OrderDetailPage from "@/components/OrderDetailPage";
+import { redirect } from "next/navigation";
 
-export default function OrderDetail() {
-  return (
-    <Layout showSearch={false}>
-      <OrderDetailPage orderId="DH001" />
-    </Layout>
-  );
+export default function OrderDetailPage() {
+  redirect("/profile/subscription");
 }

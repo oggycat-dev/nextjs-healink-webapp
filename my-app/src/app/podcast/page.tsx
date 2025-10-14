@@ -1,9 +1,9 @@
-import Layout from "@/components/Layout";
 import PostcardPage from "@/components/PostcardPage";
+import Layout from "@/components/Layout";
 
-export default function PodcastPage() {
+export default function Page() {
   return (
-    <Layout showSearch={true}>
+    <Layout>
       <PostcardPage />
     </Layout>
   );

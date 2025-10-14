@@ -1,10 +1,5 @@
-import Layout from "@/components/Layout";
-import OrdersPage from "@/components/OrdersPage";
+import { redirect } from "next/navigation";
 
-export default function Orders() {
-  return (
-    <Layout showSearch={false}>
-      <OrdersPage />
-    </Layout>
-  );
+export default function OrdersPage() {
+  redirect("/profile/subscription");
 }

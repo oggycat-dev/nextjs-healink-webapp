@@ -1,9 +1,9 @@
-import Layout from "@/components/Layout";
 import AboutPage from "@/components/AboutPage";
+import Layout from "@/components/Layout";
 
-export default function About() {
+export default function Page() {
   return (
-    <Layout showSearch={true}>
+    <Layout>
       <AboutPage />
     </Layout>
   );

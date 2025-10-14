@@ -35,9 +35,7 @@ export default function RootLayout({
       <body
         className={`${beVietnam.variable} ${inter.variable} ${geistMono.variable} antialiased bg-white text-black`}
       >
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

@@ -1,248 +1,220 @@
-import { API_CONFIG, STORAGE_KEYS, OtpSentChannel, GrantType } from '@/lib/api-config';
-import {
+import { apiClient, API_ENDPOINTS, handleApiError } from '@/lib/api-config';
+import type {
   RegisterRequest,
-  LoginRequest,
+  RegisterResponse,
   VerifyOtpRequest,
+  VerifyOtpResponse,
+  LoginRequest,
+  LoginResponse,
+  RefreshTokenResponse,
+  LogoutResponse,
+  UserProfileResponse,
   ResetPasswordRequest,
-  AuthResponse,
-  ApiError,
+  ResetPasswordResponse,
 } from '@/types/auth.types';
 
 class AuthService {
-  private getHeaders(includeAuth = false): HeadersInit {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
-
-    if (includeAuth) {
-      const token = this.getAccessToken();
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-    }
-
-    return headers;
-  }
-
-  private async handleResponse<T>(response: Response): Promise<T> {
-    const data = await response.json();
-
-    if (!response.ok) {
-      const error: ApiError = {
-        message: data.message || 'An error occurred',
-        errors: data.errors || [],
-        statusCode: response.status,
-      };
-      throw error;
-    }
-
-    return data;
-  }
-
-  // Get User Agent and IP Address
-  private getUserAgent(): string {
-    return typeof window !== 'undefined' ? window.navigator.userAgent : 'Unknown';
-  }
-
-  private async getIpAddress(): Promise<string> {
+  /**
+   * Register a new user
+   */
+  async register(data: RegisterRequest): Promise<RegisterResponse> {
     try {
-      const response = await fetch('https://api.ipify.org?format=json');
-      const data = await response.json();
-      return data.ip || '0.0.0.0';
+      const response = await apiClient.post<RegisterResponse>(
+        API_ENDPOINTS.AUTH.REGISTER,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  /**
+   * Verify OTP code
+   */
+  async verifyOtp(data: VerifyOtpRequest): Promise<VerifyOtpResponse> {
+    try {
+      const response = await apiClient.post<VerifyOtpResponse>(
+        API_ENDPOINTS.AUTH.VERIFY_OTP,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  /**
+   * Login user
+   */
+  async login(data: LoginRequest): Promise<LoginResponse> {
+    try {
+      const response = await apiClient.post<LoginResponse>(
+        API_ENDPOINTS.AUTH.LOGIN,
+        {
+          ...data,
+          grantType: data.grantType ?? 0,
+        }
+      );
+
+      // Store token and user data if login successful
+      if (response.data.isSuccess && response.data.data) {
+        const { accessToken, expiresAt, roles } = response.data.data;
+        
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('accessToken', accessToken);
+          localStorage.setItem('expiresAt', expiresAt);
+          localStorage.setItem('roles', JSON.stringify(roles));
+        }
+      }
+
+      return response.data;
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  /**
+   * Logout user
+   */
+  async logout(): Promise<LogoutResponse> {
+    try {
+      const response = await apiClient.post<LogoutResponse>(
+        API_ENDPOINTS.AUTH.LOGOUT
+      );
+
+      // Clear local storage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('expiresAt');
+        localStorage.removeItem('roles');
+      }
+
+      return response.data;
+    } catch (error) {
+      // Even if API call fails, clear local storage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('expiresAt');
+        localStorage.removeItem('roles');
+      }
+      
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  /**
+   * Refresh access token
+   */
+  async refreshToken(): Promise<RefreshTokenResponse> {
+    try {
+      const response = await apiClient.post<RefreshTokenResponse>(
+        API_ENDPOINTS.AUTH.REFRESH_TOKEN
+      );
+
+      // Update token if successful
+      if (response.data.isSuccess && response.data.data) {
+        const { accessToken, expiresAt, roles } = response.data.data;
+        
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('accessToken', accessToken);
+          localStorage.setItem('expiresAt', expiresAt);
+          localStorage.setItem('roles', JSON.stringify(roles));
+        }
+      }
+
+      return response.data;
+    } catch (error) {
+      // If refresh fails, clear tokens and redirect to login
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('expiresAt');
+        localStorage.removeItem('roles');
+      }
+      
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  /**
+   * Get current user profile
+   */
+  async getProfile(): Promise<UserProfileResponse> {
+    try {
+      const response = await apiClient.get<UserProfileResponse>(
+        API_ENDPOINTS.USER.PROFILE
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  /**
+   * Reset password - Send OTP
+   */
+  async resetPassword(data: ResetPasswordRequest): Promise<ResetPasswordResponse> {
+    try {
+      const response = await apiClient.post<ResetPasswordResponse>(
+        API_ENDPOINTS.AUTH.RESET_PASSWORD,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  /**
+   * Check if user is authenticated
+   */
+  isAuthenticated(): boolean {
+    if (typeof window === 'undefined') return false;
+    
+    const token = localStorage.getItem('accessToken');
+    const expiresAt = localStorage.getItem('expiresAt');
+    
+    if (!token || !expiresAt) return false;
+    
+    // Check if token is expired
+    const expirationTime = new Date(expiresAt).getTime();
+    const now = new Date().getTime();
+    
+    return expirationTime > now;
+  }
+
+  /**
+   * Get stored user roles
+   */
+  getUserRoles(): string[] {
+    if (typeof window === 'undefined') return [];
+    
+    const rolesStr = localStorage.getItem('roles');
+    if (!rolesStr) return [];
+    
+    try {
+      return JSON.parse(rolesStr);
     } catch {
-      return '0.0.0.0';
+      return [];
     }
   }
 
-  // Register
-  async register(data: Omit<RegisterRequest, 'otpSentChannel'>): Promise<AuthResponse> {
-    try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.REGISTER}`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify({
-          ...data,
-          otpSentChannel: OtpSentChannel.Email, // Default to Email
-        }),
-      });
-
-      return await this.handleResponse<AuthResponse>(response);
-    } catch (error) {
-      throw error;
-    }
+  /**
+   * Check if user has specific role
+   */
+  hasRole(role: string): boolean {
+    const roles = this.getUserRoles();
+    return roles.includes(role);
   }
 
-  // Login
-  async login(email: string, password: string): Promise<AuthResponse> {
-    try {
-      const ipAddress = await this.getIpAddress();
-      const userAgent = this.getUserAgent();
-
-      const loginData: LoginRequest = {
-        email,
-        password,
-        grantType: GrantType.Password,
-        userAgent,
-        ipAddress,
-      };
-
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGIN}`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify(loginData),
-      });
-
-      const result = await this.handleResponse<AuthResponse>(response);
-
-      // Save tokens and user data to localStorage
-      if (result.success && result.data) {
-        if (result.data.accessToken) {
-          this.setAccessToken(result.data.accessToken);
-        }
-        if (result.data.refreshToken) {
-          this.setRefreshToken(result.data.refreshToken);
-        }
-        if (result.data.user) {
-          this.setUserData(result.data.user);
-        }
-      }
-
-      return result;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  // Verify OTP
-  async verifyOtp(contact: string, otpCode: string, otpType: number = 1): Promise<AuthResponse> {
-    try {
-      const otpData: VerifyOtpRequest = {
-        contact,
-        otpCode,
-        otpSentChannel: OtpSentChannel.Email,
-        otpType, // 1 = Registration
-      };
-
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.VERIFY_OTP}`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify(otpData),
-      });
-
-      return await this.handleResponse<AuthResponse>(response);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  // Reset Password
-  async resetPassword(data: Omit<ResetPasswordRequest, 'otpSentChannel'>): Promise<AuthResponse> {
-    try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.RESET_PASSWORD}`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify({
-          ...data,
-          otpSentChannel: OtpSentChannel.Email,
-        }),
-      });
-
-      return await this.handleResponse<AuthResponse>(response);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  // Logout
-  async logout(): Promise<void> {
-    try {
-      await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGOUT}`, {
-        method: 'POST',
-        headers: this.getHeaders(true),
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      this.clearAuth();
-    }
-  }
-
-  // Refresh Token
-  async refreshToken(): Promise<AuthResponse> {
-    try {
-      const refreshToken = this.getRefreshToken();
-      if (!refreshToken) {
-        throw new Error('No refresh token available');
-      }
-
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.REFRESH_TOKEN}`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify({ refreshToken }),
-      });
-
-      const result = await this.handleResponse<AuthResponse>(response);
-
-      if (result.success && result.data?.accessToken) {
-        this.setAccessToken(result.data.accessToken);
-        if (result.data.refreshToken) {
-          this.setRefreshToken(result.data.refreshToken);
-        }
-      }
-
-      return result;
-    } catch (error) {
-      this.clearAuth();
-      throw error;
-    }
-  }
-
-  // Token Management
+  /**
+   * Get access token
+   */
   getAccessToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-  }
-
-  setAccessToken(token: string): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
-    }
-  }
-
-  getRefreshToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-  }
-
-  setRefreshToken(token: string): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, token);
-    }
-  }
-
-  getUserData(): any {
-    if (typeof window === 'undefined') return null;
-    const data = localStorage.getItem(STORAGE_KEYS.USER_DATA);
-    return data ? JSON.parse(data) : null;
-  }
-
-  setUserData(user: any): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
-    }
-  }
-
-  clearAuth(): void {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-      localStorage.removeItem(STORAGE_KEYS.USER_DATA);
-    }
-  }
-
-  isAuthenticated(): boolean {
-    return !!this.getAccessToken();
+    return localStorage.getItem('accessToken');
   }
 }
 
+// Export singleton instance
 export const authService = new AuthService();

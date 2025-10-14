@@ -1,374 +1,353 @@
 "use client";
 
-import { useState, FormEvent, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 
 type AuthMode = "login" | "register";
+type ContactMethod = "phone" | "email";
 
-interface FormData {
-  fullName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  phoneNumber: string;
-}
+
+const socialProviders = [
+  {
+    name: "Facebook",
+    href: "https://www.facebook.com",
+    icon: "/icons/facebook.svg",
+  },
+  {
+    name: "Google",
+    href: "https://www.google.com",
+    icon: "/icons/twitter.svg",
+  },
+];
+
+const loginFields = [
+  {
+    id: "login-email",
+    label: "Email của bạn",
+    type: "email",
+    placeholder: "name@email.com",
+  },
+  {
+    id: "login-password",
+    label: "Mật khẩu",
+    type: "password",
+    placeholder: "Nhập mật khẩu",
+  },
+];
+
+const registerFields = [
+  {
+    id: "register-name",
+    label: "Họ và tên",
+    type: "text",
+    placeholder: "Nhập họ và tên",
+  },
+  {
+    id: "register-email",
+    label: "Email của bạn",
+    type: "email",
+    placeholder: "name@email.com",
+  },
+  {
+    id: "register-password",
+    label: "Mật khẩu",
+    type: "password",
+    placeholder: "Nhập mật khẩu",
+  },
+  {
+    id: "register-confirm",
+    label: "Xác nhận mật khẩu",
+    type: "password",
+    placeholder: "Nhập lại mật khẩu",
+  },
+];
 
 export default function AuthPage() {
-  const searchParams = useSearchParams();
-  const [authMode, setAuthMode] = useState<AuthMode>("login");
-  const { login, register, error, isLoading, clearError } = useAuth();
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const router = useRouter();
+  const { isAuthenticated, login, register } = useAuth();
   
-  const [formData, setFormData] = useState<FormData>({
-    fullName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    phoneNumber: "",
-  });
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [contactMethod, setContactMethod] = useState<ContactMethod>("phone");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Form data states
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  
+  const fields = authMode === "login" ? loginFields : registerFields;
 
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-
-  // Check for success message from URL
+  // Redirect if already authenticated
   useEffect(() => {
-    const message = searchParams.get("message");
-    const tab = searchParams.get("tab");
-    
-    if (tab === "login") {
-      setAuthMode("login");
+    if (isAuthenticated) {
+      router.push("/");
     }
-    
-    if (message === "verification_success") {
-      setSuccessMessage("✓ Xác thực thành công! Tài khoản của bạn đã được kích hoạt. Vui lòng đăng nhập.");
-      // Auto clear message after 5 seconds
-      setTimeout(() => {
-        setSuccessMessage(null);
-      }, 5000);
-    }
-  }, [searchParams]);
+  }, [isAuthenticated, router]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
-    if (validationErrors[name]) {
-      setValidationErrors(prev => ({ ...prev, [name]: "" }));
-    }
-    clearError();
-  };
-
-  const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-
-    if (!formData.email) {
-      errors.email = "Email là bắt buộc";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = "Email không hợp lệ";
-    }
-
-    if (!formData.password) {
-      errors.password = "Mật khẩu là bắt buộc";
-    } else if (formData.password.length < 6) {
-      errors.password = "Mật khẩu phải có ít nhất 6 ký tự";
-    }
-
-    if (authMode === "register") {
-      if (!formData.fullName) {
-        errors.fullName = "Họ và tên là bắt buộc";
-      }
-
-      if (!formData.phoneNumber) {
-        errors.phoneNumber = "Số điện thoại là bắt buộc";
-      } else if (!/^[0-9]{10}$/.test(formData.phoneNumber)) {
-        errors.phoneNumber = "Số điện thoại phải có 10 chữ số";
-      }
-
-      if (!formData.confirmPassword) {
-        errors.confirmPassword = "Xác nhận mật khẩu là bắt buộc";
-      } else if (formData.password !== formData.confirmPassword) {
-        errors.confirmPassword = "Mật khẩu xác nhận không khớp";
-      }
-    }
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+    setError(null);
+    setIsLoading(true);
 
     try {
       if (authMode === "login") {
-        await login(formData.email, formData.password);
+        // Login
+        if (contactMethod === "email") {
+          await login(email, password);
+        } else {
+          // Phone login not implemented yet
+          setError("Đăng nhập bằng số điện thoại chưa được hỗ trợ");
+          setIsLoading(false);
+          return;
+        }
+        
+        // Redirect to home after successful login
+        router.push("/");
       } else {
-        await register({
-          email: formData.email,
-          password: formData.password,
-          confirmPassword: formData.confirmPassword,
-          fullName: formData.fullName,
-          phoneNumber: formData.phoneNumber,
-        });
+        // Register
+        if (password !== confirmPassword) {
+          setError("Mật khẩu xác nhận không khớp");
+          setIsLoading(false);
+          return;
+        }
+
+        const registerData = contactMethod === "email" 
+          ? {
+              email,
+              password,
+              fullName,
+              confirmPassword,
+              phoneNumber: "", // Required by API but not used for email registration
+              grantType: 0,
+            }
+          : {
+              email: "", // Required by API but not used for phone registration
+              phoneNumber,
+              password,
+              fullName,
+              confirmPassword,
+              grantType: 1,
+            };
+
+        await register(registerData);
+        
+        // After successful registration, redirect to verify OTP
+        router.push(`/verify-otp?contact=${contactMethod === "email" ? email : phoneNumber}`);
       }
-    } catch (err) {
-      console.error('Auth error:', err);
+    } catch (err: any) {
+      console.error("Auth error:", err);
+      setError(err.message || "Có lỗi xảy ra. Vui lòng thử lại.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const switchMode = (mode: AuthMode) => {
-    setAuthMode(mode);
-    setFormData({
-      fullName: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      phoneNumber: "",
-    });
-    setValidationErrors({});
-    clearError();
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F8F5F0] via-white to-[#F1E8D9] flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl mb-4 shadow-lg">
-            <Image src="/icons/logo.png" alt="Healink logo" width={55} height={55} />
-          </div>
-          <h1 className="text-3xl font-bold text-[#604B3B] mb-2">
-            {authMode === "login" ? "Chào mừng trở lại" : "Tạo tài khoản"}
-          </h1>
-          <p className="text-[#8B7355] text-sm">
-            {authMode === "login" 
-              ? "Đăng nhập để tiếp tục hành trình chữa lành của bạn"
-              : "Bắt đầu hành trình nuôi dưỡng cảm xúc cùng Healink"
-            }
+    <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center bg-white py-12 text-[#604B3B] sm:py-16">
+      <section className="w-full max-w-[32rem] space-y-10 px-4">
+        <header className="space-y-4 text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#D0BF98]">
+            Healink
           </p>
-        </div>
+          <h1 className="text-3xl font-bold capitalize text-[#604B3B] sm:text-[44px]">
+            {authMode === "login" ? "Đăng nhập" : "Đăng ký"}
+          </h1>
+        </header>
 
-        <div className="flex bg-[#F5F1EC] p-1 rounded-xl mb-8 shadow-inner">
-          <button
-            onClick={() => switchMode("login")}
-            className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-lg transition-all duration-200 ${
-              authMode === "login"
-                ? "bg-white text-[#604B3B] shadow-md"
-                : "text-[#8B7355] hover:text-[#604B3B]"
-            }`}
-          >
-            Đăng nhập
-          </button>
-          <button
-            onClick={() => switchMode("register")}
-            className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-lg transition-all duration-200 ${
-              authMode === "register"
-                ? "bg-white text-[#604B3B] shadow-md"
-                : "text-[#8B7355] hover:text-[#604B3B]"
-            }`}
-          >
-            Đăng ký
-          </button>
-        </div>
+        <div className="space-y-8 rounded-[2.5rem] border border-[#604B3B]/20 bg-white/80 p-8 shadow-[0_20px_60px_rgba(96,75,59,0.08)] backdrop-blur-sm sm:p-10">
+          <nav className="relative flex items-center justify-between">
+            {(["Số điện thoại", "Email"] as const).map((label, index) => {
+              const method: ContactMethod = index === 0 ? "phone" : "email";
+              const isActive = contactMethod === method;
 
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 p-8">
-          {/* Success Message */}
-          {successMessage && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg animate-fade-in">
-              <p className="text-green-700 text-sm font-medium flex items-center gap-2">
-                <span className="text-lg">✓</span>
-                {successMessage}
-              </p>
-            </div>
-          )}
+              return (
+                <button
+                  key={method}
+                  type="button"
+                  onClick={() => setContactMethod(method)}
+                  className={`relative flex-1 py-2 text-center text-sm font-medium uppercase tracking-[0.3em] transition-colors sm:text-base ${
+                    isActive ? "text-[#604B3B]" : "text-[#D0BF98]"
+                  }`}
+                  aria-pressed={isActive}
+                >
+                  {label}
+                </button>
+              );
+            })}
+            <span
+              className="pointer-events-none absolute bottom-0 left-0 h-[3px] w-full rounded-full bg-[#D0BF98]"
+              aria-hidden
+            />
+            <span
+              className={`pointer-events-none absolute bottom-0 h-[3px] rounded-full bg-[#604B3B] transition-transform duration-300 ease-out ${
+                contactMethod === "phone" ? "translate-x-0 w-[45%]" : "translate-x-full w-[45%]"
+              }`}
+              aria-hidden
+            />
+          </nav>
 
-          {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600 text-sm">{error}</p>
+            <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+              {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {authMode === "register" && (
-              <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-[#604B3B] mb-1.5">
-                  Họ và tên
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg">👤</span>
-                  <input
-                    type="text"
-                    id="fullName"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleInputChange}
-                    placeholder="Nguyễn Văn A"
-                    className={`w-full pl-12 pr-4 py-3 bg-white/70 border ${
-                      validationErrors.fullName ? 'border-red-300' : 'border-[#E5D9C5]'
-                    } rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D0BF98] focus:border-transparent transition-all`}
-                  />
-                </div>
-                {validationErrors.fullName && (
-                  <p className="mt-1 text-xs text-red-500">{validationErrors.fullName}</p>
-                )}
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-[#604B3B] mb-1.5">
-                Email
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg">📧</span>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="your.email@example.com"
-                  className={`w-full pl-12 pr-4 py-3 bg-white/70 border ${
-                    validationErrors.email ? 'border-red-300' : 'border-[#E5D9C5]'
-                  } rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D0BF98] focus:border-transparent transition-all`}
-                />
-              </div>
-              {validationErrors.email && (
-                <p className="mt-1 text-xs text-red-500">{validationErrors.email}</p>
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="space-y-4">
+              {authMode === "login" ? (
+                <>
+                  <label htmlFor="login-email" className="block">
+                    <span className="block text-sm font-semibold text-[#D0BF98]">
+                      {contactMethod === "email" ? "Email của bạn" : "Số điện thoại"}
+                    </span>
+                    <input
+                      id="login-email"
+                      name="login-email"
+                      type={contactMethod === "email" ? "email" : "tel"}
+                      placeholder={contactMethod === "email" ? "name@email.com" : "0987654321"}
+                      value={contactMethod === "email" ? email : phoneNumber}
+                      onChange={(e) => contactMethod === "email" ? setEmail(e.target.value) : setPhoneNumber(e.target.value)}
+                      required
+                      className="mt-2 h-12 w-full rounded-full border border-[#604B3B] px-5 text-sm text-[#604B3B] placeholder:text-[#D0BF98] focus:border-[#604B3B] focus:outline-none focus:ring-2 focus:ring-[#D0BF98]/60"
+                    />
+                  </label>
+                  <label htmlFor="login-password" className="block">
+                    <span className="block text-sm font-semibold text-[#D0BF98]">
+                      Mật khẩu
+                    </span>
+                    <input
+                      id="login-password"
+                      name="login-password"
+                      type="password"
+                      placeholder="Nhập mật khẩu"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="mt-2 h-12 w-full rounded-full border border-[#604B3B] px-5 text-sm text-[#604B3B] placeholder:text-[#D0BF98] focus:border-[#604B3B] focus:outline-none focus:ring-2 focus:ring-[#D0BF98]/60"
+                    />
+                  </label>
+                </>
+              ) : (
+                <>
+                  <label htmlFor="register-name" className="block">
+                    <span className="block text-sm font-semibold text-[#D0BF98]">
+                      Họ và tên
+                    </span>
+                    <input
+                      id="register-name"
+                      name="register-name"
+                      type="text"
+                      placeholder="Nhập họ và tên"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      required
+                      className="mt-2 h-12 w-full rounded-full border border-[#604B3B] px-5 text-sm text-[#604B3B] placeholder:text-[#D0BF98] focus:border-[#604B3B] focus:outline-none focus:ring-2 focus:ring-[#D0BF98]/60"
+                    />
+                  </label>
+                  <label htmlFor="register-contact" className="block">
+                    <span className="block text-sm font-semibold text-[#D0BF98]">
+                      {contactMethod === "email" ? "Email của bạn" : "Số điện thoại"}
+                    </span>
+                    <input
+                      id="register-contact"
+                      name="register-contact"
+                      type={contactMethod === "email" ? "email" : "tel"}
+                      placeholder={contactMethod === "email" ? "name@email.com" : "0987654321"}
+                      value={contactMethod === "email" ? email : phoneNumber}
+                      onChange={(e) => contactMethod === "email" ? setEmail(e.target.value) : setPhoneNumber(e.target.value)}
+                      required
+                      className="mt-2 h-12 w-full rounded-full border border-[#604B3B] px-5 text-sm text-[#604B3B] placeholder:text-[#D0BF98] focus:border-[#604B3B] focus:outline-none focus:ring-2 focus:ring-[#D0BF98]/60"
+                    />
+                  </label>
+                  <label htmlFor="register-password" className="block">
+                    <span className="block text-sm font-semibold text-[#D0BF98]">
+                      Mật khẩu
+                    </span>
+                    <input
+                      id="register-password"
+                      name="register-password"
+                      type="password"
+                      placeholder="Nhập mật khẩu"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="mt-2 h-12 w-full rounded-full border border-[#604B3B] px-5 text-sm text-[#604B3B] placeholder:text-[#D0BF98] focus:border-[#604B3B] focus:outline-none focus:ring-2 focus:ring-[#D0BF98]/60"
+                    />
+                  </label>
+                  <label htmlFor="register-confirm" className="block">
+                    <span className="block text-sm font-semibold text-[#D0BF98]">
+                      Xác nhận mật khẩu
+                    </span>
+                    <input
+                      id="register-confirm"
+                      name="register-confirm"
+                      type="password"
+                      placeholder="Nhập lại mật khẩu"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      className="mt-2 h-12 w-full rounded-full border border-[#604B3B] px-5 text-sm text-[#604B3B] placeholder:text-[#D0BF98] focus:border-[#604B3B] focus:outline-none focus:ring-2 focus:ring-[#D0BF98]/60"
+                    />
+                  </label>
+                </>
               )}
             </div>
-
-            {authMode === "register" && (
-              <div>
-                <label htmlFor="phoneNumber" className="block text-sm font-medium text-[#604B3B] mb-1.5">
-                  Số điện thoại
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg">📱</span>
-                  <input
-                    type="tel"
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleInputChange}
-                    placeholder="0123456789"
-                    className={`w-full pl-12 pr-4 py-3 bg-white/70 border ${
-                      validationErrors.phoneNumber ? 'border-red-300' : 'border-[#E5D9C5]'
-                    } rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D0BF98] focus:border-transparent transition-all`}
-                  />
-                </div>
-                {validationErrors.phoneNumber && (
-                  <p className="mt-1 text-xs text-red-500">{validationErrors.phoneNumber}</p>
-                )}
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-[#604B3B] mb-1.5">
-                Mật khẩu
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg">🔒</span>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="••••••••"
-                  className={`w-full pl-12 pr-4 py-3 bg-white/70 border ${
-                    validationErrors.password ? 'border-red-300' : 'border-[#E5D9C5]'
-                  } rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D0BF98] focus:border-transparent transition-all`}
-                />
-              </div>
-              {validationErrors.password && (
-                <p className="mt-1 text-xs text-red-500">{validationErrors.password}</p>
-              )}
-            </div>
-
-            {authMode === "register" && (
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#604B3B] mb-1.5">
-                  Xác nhận mật khẩu
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg">🔒</span>
-                  <input
-                    type="password"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    placeholder="••••••••"
-                    className={`w-full pl-12 pr-4 py-3 bg-white/70 border ${
-                      validationErrors.confirmPassword ? 'border-red-300' : 'border-[#E5D9C5]'
-                    } rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D0BF98] focus:border-transparent transition-all`}
-                  />
-                </div>
-                {validationErrors.confirmPassword && (
-                  <p className="mt-1 text-xs text-red-500">{validationErrors.confirmPassword}</p>
-                )}
-              </div>
-            )}
-
-            {authMode === "login" && (
-              <div className="flex justify-end">
-                <a href="#" className="text-sm text-[#826B39] hover:text-[#604B3B] transition-colors">
-                  Quên mật khẩu?
-                </a>
-              </div>
-            )}
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 px-6 bg-gradient-to-r from-[#D0BF98] to-[#C4B086] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex w-full items-center justify-center rounded-full bg-[#D0BF98] px-6 py-3 text-base font-semibold uppercase tracking-[0.3em] text-[#604B3B] transition-transform duration-200 hover:-translate-y-0.5 hover:bg-[#c9b083] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Đang xử lý...
-                </span>
-              ) : (
-                authMode === "login" ? "Đăng nhập" : "Đăng ký"
-              )}
+              {isLoading ? "Đang xử lý..." : authMode === "login" ? "Đăng nhập" : "Đăng ký"}
             </button>
           </form>
 
-          <div className="my-6 flex items-center">
-            <div className="flex-1 border-t border-[#E5D9C5]"></div>
-            <span className="px-4 text-xs text-[#8B7355]">hoặc</span>
-            <div className="flex-1 border-t border-[#E5D9C5]"></div>
-          </div>
-
-          <div className="space-y-3">
-            <button className="w-full flex items-center justify-center gap-3 py-3 bg-white border border-[#E5D9C5] rounded-xl hover:bg-gray-50 transition-colors">
-              <Image src="/icons/facebook.svg" alt="Google" width={20} height={20} />
-              <span className="text-sm font-medium text-[#604B3B]">
-                Tiếp tục với Google
+          <div className="space-y-6 text-center">
+            <div className="relative flex items-center justify-center">
+              <span className="mx-4 text-sm font-semibold uppercase tracking-[0.3em] text-[#604B3B]">
+                Hoặc
               </span>
-            </button>
-            <button className="w-full flex items-center justify-center gap-3 py-3 bg-white border border-[#E5D9C5] rounded-xl hover:bg-gray-50 transition-colors">
-              <Image src="/icons/facebook.svg" alt="Facebook" width={20} height={20} />
-              <span className="text-sm font-medium text-[#604B3B]">
-                Tiếp tục với Facebook
-              </span>
-            </button>
-          </div>
+              <span className="absolute left-0 h-px w-1/3 bg-[#604B3B]/40" aria-hidden />
+              <span className="absolute right-0 h-px w-1/3 bg-[#604B3B]/40" aria-hidden />
+            </div>
 
-          <div className="mt-6 p-4 bg-[#F8F5F0] border border-[#E5D9C5] rounded-xl">
-            <p className="text-xs text-[#8B7355] text-center leading-relaxed">
-              🔒 Thông tin của bạn được bảo mật và mã hóa. Chúng tôi cam kết không chia sẻ dữ liệu cá nhân với bên thứ ba.
+            <div className="flex items-center justify-center gap-6">
+              {socialProviders.map((provider) => (
+                <a
+                  key={provider.name}
+                  href={provider.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#604B3B] text-[#604B3B] transition-transform duration-200 hover:-translate-y-0.5"
+                  aria-label={`Đăng nhập với ${provider.name}`}
+                >
+                  <Image src={provider.icon} alt={provider.name} width={24} height={24} />
+                </a>
+              ))}
+            </div>
+
+            <p className="text-base text-[#D0BF98]">
+              {authMode === "login"
+                ? "Bạn chưa có tài khoản ? "
+                : "Bạn đã có tài khoản ? "}
+              <button
+                type="button"
+                onClick={() =>
+                  setAuthMode((mode) => (mode === "login" ? "register" : "login"))
+                }
+                className="font-semibold text-[#604B3B] underline-offset-4 transition-colors hover:text-[#3f2c1d]"
+              >
+                {authMode === "login" ? "Đăng ký" : "Đăng nhập"}
+              </button>
             </p>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

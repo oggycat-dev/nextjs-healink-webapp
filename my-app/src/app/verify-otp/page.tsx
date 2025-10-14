@@ -1,5 +1,10 @@
 import VerifyOtpPage from "@/components/VerifyOtpPage";
+import Layout from "@/components/Layout";
 
-export default function VerifyOtp() {
-  return <VerifyOtpPage />;
+export default function Page() {
+  return (
+    <Layout showSearch={false}>
+      <VerifyOtpPage />
+    </Layout>
+  );
 }
