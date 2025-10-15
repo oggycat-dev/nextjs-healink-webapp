@@ -87,29 +87,16 @@ export default function Layout({ children, showSearch = true }: LayoutProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-white text-black">
-      {/* SVG filter for glass distortion */}
-      <svg style={{ position: 'absolute', width: 0, height: 0 }} aria-hidden="true">
-        <defs>
-          <filter id="glass-distort-filter" x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.016 0.028" numOctaves={4} seed={9} result="turb" />
-            <feGaussianBlur in="turb" stdDeviation="0.8" result="blur" />
-            <feDisplacementMap in="SourceGraphic" in2="blur" scale={26} xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-        </defs>
-      </svg>
-
       <header 
         className={`sticky top-0 z-50 liquid-glass-header ${isScrolled ? 'scrolled' : ''}`}
         style={{ 
           background: 'var(--glass-bg)',
           borderBottom: '1px solid var(--glass-border)',
-          boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.35), 0 8px 30px rgba(0,0,0,0.08)'
+          boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.35), 0 8px 30px rgba(0,0,0,0.08)',
+          backdropFilter: 'blur(44px) saturate(210%) contrast(135%) brightness(112%)',
+          WebkitBackdropFilter: 'blur(44px) saturate(210%) contrast(135%) brightness(112%)'
         }}
       >
-        {/* Distortion overlay to bend background */}
-        <div className="glass-distort" />
-        {/* Backdrop tuning class to increase blur/contrast */}
-        <div className="glass-backdrop">
         <div className="bg-[#604B3B]/10 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.3em] text-[#604B3B] sm:text-xs">
           Hành trình của cảm xúc
         </div>
@@ -212,7 +199,6 @@ export default function Layout({ children, showSearch = true }: LayoutProps) {
               </div>
             </div>
           </div>
-        </div>
         </div>
       </header>
 

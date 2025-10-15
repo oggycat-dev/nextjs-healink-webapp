@@ -91,13 +91,9 @@ html {
   --glass-blur: 56px;
 }
 
-/* Distortion layer element */
+/* Distortion layer element - disabled for production compatibility */
 .glass-distort {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  filter: url('#glass-distort-filter');
-  opacity: 0.6; /* stronger bending */
+  display: none; /* SVG filters don't work consistently on all platforms */
 }
 
 /* Reusable Glass Card */
