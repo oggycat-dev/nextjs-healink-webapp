@@ -1,9 +1,57 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-// API Base URLs
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5010';
-export const USER_SERVICE_URL = process.env.NEXT_PUBLIC_USER_SERVICE_URL || 'http://localhost:5002';
-export const CONTENT_SERVICE_URL = process.env.NEXT_PUBLIC_CONTENT_SERVICE_URL || 'http://localhost:5004';
+// ========================================
+// ENVIRONMENT VARIABLES
+// ========================================
+// Main API Gateway URL (single source of truth)
+export const API_GATEWAY_URL = 
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL || 
+  'http://localhost:5010';
+
+// Individual service URLs (optional overrides)
+export const AUTH_SERVICE_URL = 
+  process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 
+  API_GATEWAY_URL;
+
+export const USER_SERVICE_URL = 
+  process.env.NEXT_PUBLIC_USER_SERVICE_URL || 
+  API_GATEWAY_URL;
+
+export const CONTENT_SERVICE_URL = 
+  process.env.NEXT_PUBLIC_CONTENT_SERVICE_URL || 
+  API_GATEWAY_URL;
+
+export const SUBSCRIPTION_SERVICE_URL = 
+  process.env.NEXT_PUBLIC_SUBSCRIPTION_SERVICE_URL || 
+  API_GATEWAY_URL;
+
+export const PAYMENT_SERVICE_URL = 
+  process.env.NEXT_PUBLIC_PAYMENT_SERVICE_URL || 
+  API_GATEWAY_URL;
+
+export const NOTIFICATION_SERVICE_URL = 
+  process.env.NEXT_PUBLIC_NOTIFICATION_SERVICE_URL || 
+  API_GATEWAY_URL;
+
+// App configuration
+export const APP_CONFIG = {
+  name: process.env.NEXT_PUBLIC_APP_NAME || 'Healink',
+  description: process.env.NEXT_PUBLIC_APP_DESCRIPTION || 'Nuôi dưỡng cảm xúc mỗi ngày',
+  url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  tokenKey: process.env.NEXT_PUBLIC_AUTH_TOKEN_KEY || 'healink_auth_token',
+  refreshTokenKey: process.env.NEXT_PUBLIC_AUTH_REFRESH_TOKEN_KEY || 'healink_refresh_token',
+};
+
+// API configuration
+export const API_CONFIG = {
+  timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000', 10),
+  logLevel: process.env.NEXT_PUBLIC_LOG_LEVEL || 'debug',
+  enableDebug: process.env.NEXT_PUBLIC_ENABLE_DEBUG_MODE === 'true',
+  enableMockData: process.env.NEXT_PUBLIC_ENABLE_MOCK_DATA === 'true',
+};
+
+// Legacy support - will be removed in future
+export const API_BASE_URL = API_GATEWAY_URL;
 
 export const API_ENDPOINTS = {
   // Auth endpoints (via Gateway)
@@ -71,8 +119,8 @@ export interface PaginationResult<T> {
 // Create axios instance
 const createApiClient = (): AxiosInstance => {
   const client = axios.create({
-    baseURL: API_BASE_URL,
-    timeout: 30000,
+    baseURL: API_GATEWAY_URL,
+    timeout: API_CONFIG.timeout,
     headers: {
       'Content-Type': 'application/json',
     },

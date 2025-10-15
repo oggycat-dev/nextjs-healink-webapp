@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import EnvStatus from "./EnvStatus";
 
 const navLinks = [
   { name: "Trang chủ", href: "/" },
@@ -256,6 +257,9 @@ export default function Layout({ children, showSearch = true }: LayoutProps) {
           </p>
         </div>
       </footer>
+      
+      {/* Environment Status (Development Only) */}
+      <EnvStatus />
     </div>
   );
 }
