@@ -156,6 +156,28 @@ export default function PostcardPage() {
             // ALWAYS try to fetch full podcast details first
             const podcasts = await Promise.all(
               res.data.recommendations.map(async (rec) => {
+                // Skip DB fetch for training IDs like p_00123 to avoid 400 spam
+                const guidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+                const isGuid = guidRegex.test(rec.podcastId);
+                if (!isGuid) {
+                  return {
+                    id: rec.podcastId,
+                    title: rec.title,
+                    description: rec.recommendationReason,
+                    topic: rec.topic,
+                    category: rec.category || "",
+                    duration: rec.durationMinutes ? `${rec.durationMinutes} phút` : "",
+                    thumbnailUrl: null,
+                    audioUrl: rec.contentUrl || null,
+                    hostName: "Unknown Host",
+                    viewCount: 0,
+                    likeCount: 0,
+                    isLiked: false,
+                    createdAt: "",
+                    emotionCategories: [],
+                    topicCategories: [],
+                  } as PodcastItem;
+                }
                 try {
                   // Try to fetch full podcast details from ContentService
                   console.log(`🔍 Fetching full details for podcast: ${rec.podcastId}`);
@@ -217,7 +239,7 @@ export default function PostcardPage() {
 
         // If no data available, show message
         if (trending.length === 0 && newReleases.length === 0) {
-          setError("Chưa có podcast nào. Hãy quay lại sau!");
+          setError("Hãy Đăng Ký để tận hưởng nhiều podcast hơn!");
         }
       } catch (err) {
         console.error("Error fetching podcasts:", err);
@@ -297,10 +319,10 @@ export default function PostcardPage() {
         <div className="text-center">
           <p className="text-red-600 text-lg">{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => (window.location.href = '/subscription')}
             className="mt-4 rounded-lg bg-[#604B3B] px-6 py-2 text-white hover:bg-[#4d3c2f]"
           >
-            Thử lại
+            Hãy Đăng Ký
           </button>
         </div>
       </div>
