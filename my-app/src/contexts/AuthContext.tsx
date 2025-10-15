@@ -19,26 +19,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Fetch user profile
   const fetchProfile = useCallback(async () => {
     try {
-      if (!authService.isAuthenticated()) {
+      console.log('[AuthContext] Checking authentication...');
+      const isAuth = authService.isAuthenticated();
+      console.log('[AuthContext] Is authenticated:', isAuth);
+      
+      if (!isAuth) {
         setIsAuthenticated(false);
         setUser(null);
         setIsLoading(false);
         return;
       }
 
+      console.log('[AuthContext] Fetching user profile...');
       const response = await authService.getProfile();
+      
+      console.log('[AuthContext] Profile response:', {
+        isSuccess: response.isSuccess,
+        hasData: !!response.data,
+        userData: response.data ? { email: response.data.email, fullName: response.data.fullName } : null
+      });
       
       if (response.isSuccess && response.data) {
         setUser(response.data);
         setIsAuthenticated(true);
+        console.log('[AuthContext] User state updated successfully');
       } else {
         setUser(null);
         setIsAuthenticated(false);
+        console.log('[AuthContext] Profile fetch failed, clearing auth state');
       }
     } catch (error) {
-      console.error('Failed to fetch profile:', error);
+      console.error('[AuthContext] Failed to fetch profile:', error);
       // If 401, clear auth state
       if (error instanceof Error && error.message.includes('401')) {
+        console.log('[AuthContext] 401 error, logging out...');
         authService.logout();
       }
       setUser(null);
@@ -56,15 +70,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Login function
   const login = async (email: string, password: string) => {
     try {
+      console.log('[AuthContext] Attempting login...', { email });
       const response = await authService.login({ email, password });
+      
+      console.log('[AuthContext] Login response:', {
+        isSuccess: response.isSuccess,
+        hasData: !!response.data,
+        message: response.message
+      });
       
       if (!response.isSuccess) {
         throw new Error(response.message || 'Login failed');
       }
 
       // Fetch user profile after successful login
+      console.log('[AuthContext] Fetching profile after login...');
       await fetchProfile();
+      console.log('[AuthContext] Profile fetched successfully');
     } catch (error) {
+      console.error('[AuthContext] Login error:', error);
       throw error;
     }
   };

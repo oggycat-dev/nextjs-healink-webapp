@@ -128,9 +128,14 @@ const createApiClient = (): AxiosInstance => {
     },
   });
 
-  // Request interceptor - Add auth token
+  // Request interceptor - Add auth token and ngrok header
   client.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
+      // Add ngrok skip browser warning header
+      if (config.headers) {
+        config.headers['ngrok-skip-browser-warning'] = 'true';
+      }
+      
       // Get token from localStorage (only on client side)
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('accessToken');
@@ -215,9 +220,14 @@ const createContentClient = (): AxiosInstance => {
     },
   });
 
-  // Request interceptor - Add auth token
+  // Request interceptor - Add auth token and ngrok header
   client.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
+      // Add ngrok skip browser warning header
+      if (config.headers) {
+        config.headers['ngrok-skip-browser-warning'] = 'true';
+      }
+      
       // Get token from localStorage (only on client side)
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('accessToken');
@@ -251,9 +261,14 @@ const createUserServiceClient = (): AxiosInstance => {
     },
   });
 
-  // Request interceptor - Add auth token
+  // Request interceptor - Add auth token and ngrok header
   client.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
+      // Add ngrok skip browser warning header
+      if (config.headers) {
+        config.headers['ngrok-skip-browser-warning'] = 'true';
+      }
+      
       // Get token from localStorage (only on client side)
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('accessToken');
