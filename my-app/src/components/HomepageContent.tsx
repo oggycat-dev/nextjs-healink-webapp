@@ -186,11 +186,17 @@ export default function HomepageContent() {
             Chánh niệm mỗi ngày
           </h2>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-            {mindfulHighlights.map((item, index) => (
-              <div
-                key={index}
-                className="flex flex-col items-center gap-4 rounded-3xl bg-[#FBE7BA] p-8 text-center shadow-md transition-transform hover:scale-105"
-              >
+            {mindfulHighlights.map((item, index) => {
+              const gradients = [
+                'from-[#FFF4D7] to-[#FFE0E0]', // warm sunrise
+                'from-[#E0F7FA] to-[#E8EAF6]', // calm blue-violet
+                'from-[#EAFCE3] to-[#E0F2F1]', // mint green
+              ];
+              return (
+                <div
+                  key={index}
+                  className={`flex flex-col items-center gap-4 rounded-3xl p-8 text-center shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-transform hover:scale-105 bg-gradient-to-br ${gradients[index % gradients.length]} border border-white/60 backdrop-blur-md`}
+                >
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white">
                   <svg className="h-8 w-8 text-[#604B3B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -198,8 +204,9 @@ export default function HomepageContent() {
                 </div>
                 <h3 className="text-xl font-semibold text-[#604B3B]">{item.title}</h3>
                 <p className="text-sm font-light text-[#826B39]">{item.description}</p>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -213,7 +220,7 @@ export default function HomepageContent() {
             {communityHighlights.map((item, index) => (
               <div
                 key={index}
-                className="flex flex-col items-center gap-4 rounded-3xl bg-white p-6 text-center shadow-md transition-transform hover:scale-105"
+                className="flex flex-col items-center gap-4 rounded-3xl glass-card p-6 text-center shadow-md transition-transform hover:scale-105"
               >
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#B99B5C]">
                   {index === 0 && (
@@ -241,6 +248,89 @@ export default function HomepageContent() {
                 <p className="text-sm font-light text-[#826B39]">{item.description}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* National Pride Section - Bác Hồ */}
+      <section id="national-pride" className="relative overflow-hidden py-24">
+        {/* Blurred Background Image */}
+        <div className="absolute inset-0 -z-10">
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{
+              backgroundImage: `url(/images/bacHo.jpg)`,
+              filter: 'blur(25px) saturate(1) brightness(0.7)',
+              transform: 'scale(1.15)',
+            }}
+          />
+          {/* Red overlay to maintain national pride theme */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#DA251D]/45 via-[#E03C31]/40 to-[#DA251D]/45" />
+          {/* Dark overlay for text readability */}
+          <div className="absolute inset-0 bg-black/40" />
+        </div>
+
+        {/* Vietnam Flag Pattern */}
+        <div className="absolute top-10 right-10 opacity-15 z-0">
+          <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+            <polygon points="50,15 61,45 92,45 67,62 78,92 50,75 22,92 33,62 8,45 39,45" fill="#FFCD00"/>
+          </svg>
+        </div>
+        <div className="absolute bottom-10 left-10 opacity-15 z-0">
+          <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
+            <polygon points="50,15 61,45 92,45 67,62 78,92 50,75 22,92 33,62 8,45 39,45" fill="#FFCD00"/>
+          </svg>
+        </div>
+
+        <div className="relative mx-auto w-full max-w-[1440px] px-6">
+          {/* Large Vietnam Flag - Left */}
+          <div className="absolute left-10 top-1/2 -translate-y-1/2 opacity-20 hidden lg:block">
+            <div className="w-48 h-32 rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20 transform -rotate-6">
+              <div className="w-full h-full bg-[#DA251D] flex items-center justify-center">
+                <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
+                  <polygon points="50,15 61,45 92,45 67,62 78,92 50,75 22,92 33,62 8,45 39,45" fill="#FFCD00"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Large Vietnam Flag - Right */}
+          <div className="absolute right-10 top-1/2 -translate-y-1/2 opacity-20 hidden lg:block">
+            <div className="w-48 h-32 rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20 transform rotate-6">
+              <div className="w-full h-full bg-[#DA251D] flex items-center justify-center">
+                <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
+                  <polygon points="50,15 61,45 92,45 67,62 78,92 50,75 22,92 33,62 8,45 39,45" fill="#FFCD00"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-center min-h-[500px]">
+            {/* Content - Centered */}
+            <div className="text-white space-y-10 max-w-5xl text-center px-4 relative z-10">
+
+              {/* Main Title */}
+              <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.6)' }}>
+                Sẵn Sàng Bước Vào
+                <span className="block text-[#FFCD00] mt-4" style={{ textShadow: '0 4px 25px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.7), 0 0 40px rgba(255,205,0,0.3)' }}>
+                  Kỷ Nguyên Mới
+                </span>
+              </h2>
+
+              {/* Subtitle */}
+              <p className="text-3xl md:text-4xl font-semibold text-white/95 leading-relaxed" style={{ textShadow: '0 3px 15px rgba(0,0,0,0.8), 0 2px 6px rgba(0,0,0,0.6)' }}>
+                Kỷ Nguyên Vươn Mình Của Dân Tộc
+              </p>
+
+              {/* Decorative line */}
+              <div className="flex items-center justify-center gap-4 pt-6">
+                <div className="h-1 w-24 bg-gradient-to-r from-transparent to-[#FFCD00] rounded"></div>
+                <svg className="w-8 h-8 text-[#FFCD00]" fill="currentColor" viewBox="0 0 24 24">
+                  <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/>
+                </svg>
+                <div className="h-1 w-24 bg-gradient-to-l from-transparent to-[#FFCD00] rounded"></div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

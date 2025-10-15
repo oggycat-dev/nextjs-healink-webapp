@@ -12,6 +12,7 @@ export default function UploadPodcastForm({ onSuccess }: UploadPodcastFormProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // Form state
   const [title, setTitle] = useState("");
@@ -25,11 +26,36 @@ export default function UploadPodcastForm({ onSuccess }: UploadPodcastFormProps)
   const [seriesName, setSeriesName] = useState("");
   const [transcriptUrl, setTranscriptUrl] = useState("");
   const [tags, setTags] = useState<string>("");
-  const [emotionCategories, setEmotionCategories] = useState<string[]>([]);
-  const [topicCategories, setTopicCategories] = useState<string[]>([]);
+  const [emotionCategories, setEmotionCategories] = useState<number[]>([]);
+  const [topicCategories, setTopicCategories] = useState<number[]>([]);
 
-  const emotionOptions = ["Relaxed", "Happy", "Sad", "Motivated", "Calm", "Energetic"];
-  const topicOptions = ["Mental Health", "Wellness", "Meditation", "Sleep", "Productivity", "Relationships"];
+  // Emotion categories matching backend enum
+  const emotionOptions = [
+    { label: "Hạnh phúc", value: 1 }, // Happiness
+    { label: "Buồn bã", value: 2 }, // Sadness
+    { label: "Lo âu", value: 3 }, // Anxiety
+    { label: "Tức giận", value: 4 }, // Anger
+    { label: "Sợ hãi", value: 5 }, // Fear
+    { label: "Yêu thương", value: 6 }, // Love
+    { label: "Hy vọng", value: 7 }, // Hope
+    { label: "Biết ơn", value: 8 }, // Gratitude
+    { label: "Chánh niệm", value: 9 }, // Mindfulness
+    { label: "Tự thương", value: 10 }, // SelfCompassion
+  ];
+
+  // Topic categories matching backend enum
+  const topicOptions = [
+    { label: "Sức khỏe tâm thần", value: 1 }, // MentalHealth
+    { label: "Mối quan hệ", value: 2 }, // Relationships
+    { label: "Chăm sóc bản thân", value: 3 }, // SelfCare
+    { label: "Chánh niệm", value: 4 }, // Mindfulness
+    { label: "Phát triển bản thân", value: 5 }, // PersonalGrowth
+    { label: "Cân bằng công việc", value: 6 }, // WorkLifeBalance
+    { label: "Căng thẳng", value: 7 }, // Stress
+    { label: "Trầm cảm", value: 8 }, // Depression
+    { label: "Lo âu", value: 9 }, // Anxiety
+    { label: "Trị liệu", value: 10 }, // Therapy
+  ];
 
   const handleAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -99,12 +125,12 @@ export default function UploadPodcastForm({ onSuccess }: UploadPodcastFormProps)
         });
       }
       
-      // Add categories
+      // Add categories (convert enum numbers to strings for FormData)
       emotionCategories.forEach(cat => {
-        formData.append("EmotionCategories", cat);
+        formData.append("EmotionCategories", cat.toString());
       });
       topicCategories.forEach(cat => {
-        formData.append("TopicCategories", cat);
+        formData.append("TopicCategories", cat.toString());
       });
 
       const token = localStorage.getItem("accessToken");
@@ -117,14 +143,26 @@ export default function UploadPodcastForm({ onSuccess }: UploadPodcastFormProps)
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to upload podcast");
+        let errorMessage = "Failed to upload podcast";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.Message || JSON.stringify(errorData);
+        } catch (e) {
+          // If response is not JSON, use status text
+          errorMessage = `Upload failed: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
       
-      alert("✅ Podcast đã được tải lên thành công! Đang chờ phê duyệt.");
-      onSuccess();
+      // Show success notification
+      setShowSuccess(true);
+      
+      // Redirect after 3 seconds
+      setTimeout(() => {
+        onSuccess();
+      }, 3000);
       
     } catch (err: any) {
       console.error("Error uploading podcast:", err);
@@ -136,7 +174,7 @@ export default function UploadPodcastForm({ onSuccess }: UploadPodcastFormProps)
     }
   };
 
-  const toggleEmotionCategory = (category: string) => {
+  const toggleEmotionCategory = (category: number) => {
     setEmotionCategories(prev =>
       prev.includes(category)
         ? prev.filter(c => c !== category)
@@ -144,7 +182,7 @@ export default function UploadPodcastForm({ onSuccess }: UploadPodcastFormProps)
     );
   };
 
-  const toggleTopicCategory = (category: string) => {
+  const toggleTopicCategory = (category: number) => {
     setTopicCategories(prev =>
       prev.includes(category)
         ? prev.filter(c => c !== category)
@@ -153,12 +191,52 @@ export default function UploadPodcastForm({ onSuccess }: UploadPodcastFormProps)
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
-          {error}
+    <>
+      {/* Success Modal */}
+      {showSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="relative mx-4 max-w-md rounded-2xl bg-white p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
+            {/* Success Icon */}
+            <div className="mb-6 flex justify-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
+                <svg className="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+            
+            {/* Success Message */}
+            <div className="text-center">
+              <h3 className="mb-2 text-2xl font-bold text-[#604B3B]">
+                Tải lên thành công! 🎉
+              </h3>
+              <p className="mb-1 text-[#604B3B]/80">
+                Podcast của bạn đã được tải lên thành công
+              </p>
+              <p className="text-sm text-[#604B3B]/60">
+                Đang chờ phê duyệt (1-3 ngày làm việc)
+              </p>
+            </div>
+
+            {/* Progress Indicator */}
+            <div className="mt-6">
+              <div className="h-1 overflow-hidden rounded-full bg-green-100">
+                <div className="h-full w-full animate-pulse bg-green-600" style={{ animation: 'progress 3s linear forwards' }}></div>
+              </div>
+              <p className="mt-2 text-center text-xs text-[#604B3B]/50">
+                Tự động chuyển trang sau 3 giây...
+              </p>
+            </div>
+          </div>
         </div>
       )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
 
       {uploadProgress > 0 && (
         <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3">
@@ -209,7 +287,7 @@ export default function UploadPodcastForm({ onSuccess }: UploadPodcastFormProps)
         </label>
         <input
           type="file"
-          accept="audio/mp3,audio/mpeg,audio/wav,audio/ogg,audio/m4a,audio/mp4"
+          accept="audio/mp3,audio/mpeg,audio/wav,audio/ogg,audio/m4a,audio/mp4,audio/m4a,.m4a"
           onChange={handleAudioChange}
           required
           className="w-full rounded-lg border border-[#D0BF98] px-4 py-3 text-[#604B3B] file:mr-4 file:rounded-full file:border-0 file:bg-[#604B3B] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-[#4a3a2d]"
@@ -338,16 +416,16 @@ export default function UploadPodcastForm({ onSuccess }: UploadPodcastFormProps)
         <div className="flex flex-wrap gap-2">
           {emotionOptions.map((emotion) => (
             <button
-              key={emotion}
+              key={emotion.value}
               type="button"
-              onClick={() => toggleEmotionCategory(emotion)}
+              onClick={() => toggleEmotionCategory(emotion.value)}
               className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                emotionCategories.includes(emotion)
+                emotionCategories.includes(emotion.value)
                   ? "bg-[#604B3B] text-white"
                   : "bg-[#FBE7BA]/30 text-[#604B3B] hover:bg-[#FBE7BA]/50"
               }`}
             >
-              {emotion}
+              {emotion.label}
             </button>
           ))}
         </div>
@@ -361,16 +439,16 @@ export default function UploadPodcastForm({ onSuccess }: UploadPodcastFormProps)
         <div className="flex flex-wrap gap-2">
           {topicOptions.map((topic) => (
             <button
-              key={topic}
+              key={topic.value}
               type="button"
-              onClick={() => toggleTopicCategory(topic)}
+              onClick={() => toggleTopicCategory(topic.value)}
               className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                topicCategories.includes(topic)
+                topicCategories.includes(topic.value)
                   ? "bg-[#604B3B] text-white"
                   : "bg-[#FBE7BA]/30 text-[#604B3B] hover:bg-[#FBE7BA]/50"
               }`}
             >
-              {topic}
+              {topic.label}
             </button>
           ))}
         </div>
@@ -399,5 +477,13 @@ export default function UploadPodcastForm({ onSuccess }: UploadPodcastFormProps)
         <strong>Lưu ý:</strong> Podcast của bạn sẽ được xem xét trước khi xuất bản. Thời gian duyệt: 1-3 ngày làm việc.
       </div>
     </form>
+
+    <style jsx>{`
+      @keyframes progress {
+        from { width: 100%; }
+        to { width: 0%; }
+      }
+    `}</style>
+    </>
   );
 }

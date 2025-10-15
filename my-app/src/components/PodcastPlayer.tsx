@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import Image from "next/image";
 import { podcastService } from "@/services/podcast.service";
 import type { PodcastDetail } from "@/types/podcast.types";
@@ -11,7 +13,10 @@ interface PodcastPlayerProps {
 }
 
 export default function PodcastPlayer({ podcast, onClose }: PodcastPlayerProps) {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const audioRef = useRef<HTMLAudioElement>(null);
+  const viewTrackedRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -19,6 +24,8 @@ export default function PodcastPlayer({ podcast, onClose }: PodcastPlayerProps) 
   const [isMuted, setIsMuted] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(podcast.likeCount || 0);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -66,6 +73,14 @@ export default function PodcastPlayer({ podcast, onClose }: PodcastPlayerProps) 
       audio.removeEventListener('playing', handlePlaying);
     };
   }, []);
+
+  // Increment view count when podcast is loaded
+  useEffect(() => {
+    if (podcast && !viewTrackedRef.current) {
+      viewTrackedRef.current = true;
+      podcastService.incrementView(podcast.id);
+    }
+  }, [podcast]);
 
   const togglePlayPause = () => {
     const audio = audioRef.current;

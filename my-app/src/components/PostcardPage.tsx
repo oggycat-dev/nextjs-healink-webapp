@@ -18,21 +18,93 @@ interface FlashCard {
 const flashCards: FlashCard[] = [
   {
     id: 1,
-    quote: "Bạn là nhà,\nđừng bỏ rơi\nchính mình.",
-    author: "Trần Văn A",
-    role: "Bác sĩ tâm lý",
+    quote: "Bước đi trong chánh niệm\nmang lại sự bình an\nvà hạnh phúc.",
+    author: "Thích Nhất Hạnh",
+    role: "Thiền sư, Tác giả",
   },
   {
     id: 2,
-    quote: "Hãy sống chậm lại,\nđể cảm nhận từng\nkhoảnh khắc.",
-    author: "Nguyễn Thị B",
-    role: "Chuyên gia tâm lý",
+    quote: "Lòng dũng cảm bắt đầu\ntừ việc cho phép\nbản thân được tổn thương.",
+    author: "Brené Brown",
+    role: "Nhà nghiên cứu, Giáo sư",
   },
   {
     id: 3,
-    quote: "Yêu thương bản thân\nlà hành trình\nlâu dài.",
-    author: "Phạm Văn C",
-    role: "Nhà tâm lý học",
+    quote: "Điều kỳ diệu nhất\nlà chấp nhận\nchính mình.",
+    author: "Carl Rogers",
+    role: "Nhà tâm lý học nhân văn",
+  },
+  {
+    id: 4,
+    quote: "Giữa kích thích và phản ứng\ncó một khoảng trống,\nở đó là quyền tự do của chúng ta.",
+    author: "Viktor Frankl",
+    role: "Nhà tâm thần học, Tác giả",
+  },
+  {
+    id: 5,
+    quote: "Đời ngắn đừng ngủ dài,\nhãy thức tỉnh\nvà sống trọn vẹn.",
+    author: "Thích Minh Niệm",
+    role: "Thiền sư, Tác giả",
+  },
+  {
+    id: 6,
+    quote: "Khi bạn chậm lại,\nbạn sẽ nhìn thấy\nnhững điều đẹp đẽ hơn.",
+    author: "Haemin Sunim",
+    role: "Thiền sư, Tác giả",
+  },
+  {
+    id: 7,
+    quote: "Bạn không thể\nđổ nước vào ly đã đầy,\nhãy làm trống tâm trí.",
+    author: "Bruce Lee",
+    role: "Triết gia võ thuật",
+  },
+  {
+    id: 8,
+    quote: "Hạnh phúc không phải\nlà điểm đến,\nmà là cách bạn đi.",
+    author: "Dalai Lama",
+    role: "Lãnh đạo tâm linh Tây Tạng",
+  },
+  {
+    id: 9,
+    quote: "Sự tự bi\nlà cho phép bản thân\nđược yếu đuối.",
+    author: "Kristin Neff",
+    role: "Nhà tâm lý học, Tiến sĩ",
+  },
+  {
+    id: 10,
+    quote: "Bạn đủ tốt,\nbạn đủ mạnh mẽ,\nbạn đủ xứng đáng.",
+    author: "Louise Hay",
+    role: "Tác giả, Diễn giả",
+  },
+  {
+    id: 11,
+    quote: "Chăm sóc bản thân\nkhông phải là ích kỷ,\nmà là cần thiết.",
+    author: "Audre Lorde",
+    role: "Nhà thơ, Nhà hoạt động",
+  },
+  {
+    id: 12,
+    quote: "Trong mọi khủng hoảng\nđều ẩn chứa\ncơ hội để lớn mạnh.",
+    author: "Carl Jung",
+    role: "Nhà tâm lý học sâu",
+  },
+  {
+    id: 13,
+    quote: "Hãy là người bạn\ntốt nhất\ncủa chính mình.",
+    author: "Pema Chödrön",
+    role: "Ni sư, Tác giả",
+  },
+  {
+    id: 14,
+    quote: "Chánh niệm là\nchìa khóa\nđể giải thoát khổ đau.",
+    author: "Jon Kabat-Zinn",
+    role: "Giáo sư Y khoa, Nhà nghiên cứu",
+  },
+  {
+    id: 15,
+    quote: "Bạn không thể\nkinh nghiệm ngày mai\ntrừ khi sống hôm nay.",
+    author: "Eckhart Tolle",
+    role: "Tác giả, Diễn giả",
   },
 ];
 
@@ -211,7 +283,7 @@ export default function PostcardPage() {
             {flashCards.map((card) => (
               <div
                 key={card.id}
-                className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#F5E6D3] to-[#E8D4BA] p-8 shadow-lg"
+                className="relative overflow-hidden rounded-[32px] glass-card p-8 shadow-lg"
               >
                 <div className="relative z-10 flex flex-col items-center text-center">
                   <p className="whitespace-pre-line text-2xl font-bold leading-tight text-[#2B3F6C]">
@@ -281,7 +353,7 @@ export default function PostcardPage() {
                           }}
                         >
                           {/* Podcast Cover */}
-                          <div className="relative mb-4 overflow-hidden rounded-3xl bg-gradient-to-br from-gray-100 to-gray-200 shadow-lg">
+                          <div className="relative mb-4 overflow-hidden rounded-3xl glass-card shadow-lg">
                             <div className="relative aspect-square">
                               {podcast.thumbnailUrl ? (
                                 <Image
@@ -312,7 +384,7 @@ export default function PostcardPage() {
                             </div>
 
                             {/* Play Button Overlay */}
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/30 group-hover:opacity-100">
+                            <div className="absolute inset-0 z-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/30 group-hover:opacity-100 pointer-events-none">
                               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-lg">
                                 <svg
                                   className="h-8 w-8 text-[#604B3B]"
@@ -326,7 +398,7 @@ export default function PostcardPage() {
 
                             {/* Duration Badge */}
                             {podcast.duration && (
-                              <div className="absolute bottom-3 right-3 rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
+                              <div className="absolute bottom-3 right-3 z-10 rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
                                 {podcast.duration}
                               </div>
                             )}

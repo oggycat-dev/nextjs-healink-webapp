@@ -74,6 +74,8 @@ export const API_ENDPOINTS = {
     PODCASTS_TRENDING: '/api/content/user/podcasts/trending',
     PODCASTS_LATEST: '/api/content/user/podcasts/latest',
     PODCAST_DETAIL: (id: string) => `/api/content/user/podcasts/${id}`,
+    PODCAST_INCREMENT_VIEW: (id: string) => `/api/content/user/podcasts/${id}/views`,
+    PODCAST_TOGGLE_LIKE: (id: string) => `/api/content/user/podcasts/${id}/likes`,
     MY_PODCASTS: '/api/content/creator/podcasts/my-podcasts',
     CATEGORIES: '/api/content/categories',
     UPLOAD_URL: '/api/content/upload/generate-upload-url',

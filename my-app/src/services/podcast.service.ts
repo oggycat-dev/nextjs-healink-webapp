@@ -319,6 +319,40 @@ class PodcastService {
   }
 
   /**
+   * Increment view count for a podcast
+   * This should be called when user starts viewing/playing a podcast
+   */
+  async incrementView(podcastId: string): Promise<void> {
+    try {
+      await apiClient.post(API_ENDPOINTS.CONTENT.PODCAST_INCREMENT_VIEW(podcastId));
+      console.log('View count incremented for podcast:', podcastId);
+    } catch (error) {
+      // Silently fail - don't block user experience if view tracking fails
+      console.error('Failed to increment view count:', error);
+    }
+  }
+
+  /**
+   * Toggle like/unlike for a podcast (requires authentication)
+   * Returns the new like count
+   */
+  async toggleLike(podcastId: string): Promise<number> {
+    try {
+      const response = await apiClient.post<{ likes: number }>(
+        API_ENDPOINTS.CONTENT.PODCAST_TOGGLE_LIKE(podcastId)
+      );
+      
+      if (response.data && typeof response.data.likes === 'number') {
+        return response.data.likes;
+      }
+      
+      throw new Error('Invalid response from toggle like API');
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  /**
    * Format duration from seconds to MM:SS or HH:MM:SS
    */
   formatDuration(seconds: number): string {

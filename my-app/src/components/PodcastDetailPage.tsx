@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { podcastService } from "@/services/podcast.service";
 import Image from "next/image";
 
 interface PodcastDetailPageProps {
@@ -39,10 +40,19 @@ export default function PodcastDetailPage({ podcastId }: PodcastDetailPageProps)
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const viewTrackedRef = useRef(false); // Track if view has been incremented
 
   useEffect(() => {
     fetchPodcast();
   }, [podcastId]);
+
+  // Increment view count when podcast is loaded
+  useEffect(() => {
+    if (podcast && !viewTrackedRef.current) {
+      viewTrackedRef.current = true;
+      podcastService.incrementView(podcastId);
+    }
+  }, [podcast, podcastId]);
 
   const fetchPodcast = async () => {
     setIsLoading(true);
@@ -114,7 +124,20 @@ export default function PodcastDetailPage({ podcastId }: PodcastDetailPageProps)
       router.push("/auth");
       return;
     }
-    setIsLiked(!isLiked);
+    
+    try {
+      // Call API to toggle like
+      const newLikeCount = await podcastService.toggleLike(podcastId);
+      
+      // Update UI
+      setIsLiked(!isLiked);
+      if (podcast) {
+        setPodcast({ ...podcast, likeCount: newLikeCount });
+      }
+    } catch (error) {
+      console.error("Failed to toggle like:", error);
+      // Optionally show error message to user
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -159,21 +182,37 @@ export default function PodcastDetailPage({ podcastId }: PodcastDetailPageProps)
   }
 
   return (
-    <div className="py-12">
-      <div className="mx-auto max-w-6xl px-4">
-        {/* Back button */}
-        <button
-          onClick={() => router.back()}
-          className="mb-6 flex items-center gap-2 text-[#604B3B] transition-colors hover:text-[#4a3a2d]"
-        >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Quay lại
-        </button>
+    <div className="relative min-h-screen">
+      {/* Blurred Background */}
+      <div className="fixed inset-0 -z-10">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url(${podcast.thumbnailUrl || "/images/default-podcast.jpg"})`,
+            filter: 'blur(150px) saturate(0.8)',
+            transform: 'scale(1.5)',
+          }}
+        />
+        {/* Dark overlay for better readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/80 to-black/90" />
+      </div>
 
-        {/* Main Player Card */}
-        <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-[#604B3B] via-[#6B5646] to-[#4a3a2d] p-8 shadow-2xl md:p-12">
+      {/* Content */}
+      <div className="relative py-12">
+        <div className="mx-auto max-w-6xl px-4">
+          {/* Back button */}
+          <button
+            onClick={() => router.back()}
+            className="mb-6 flex items-center gap-2 text-white/90 transition-colors hover:text-white"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Quay lại
+          </button>
+
+          {/* Main Player Card */}
+          <div className="overflow-hidden rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-8 shadow-2xl md:p-12">
           <div className="grid gap-8 md:grid-cols-2">
             {/* Left: Artwork */}
             <div className="flex items-center justify-center">
@@ -332,22 +371,22 @@ export default function PodcastDetailPage({ podcastId }: PodcastDetailPageProps)
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Description */}
-            <div className="rounded-2xl bg-white p-8 shadow-lg">
-              <h2 className="mb-4 text-2xl font-bold text-[#604B3B]">Giới thiệu</h2>
-              <p className="whitespace-pre-line leading-relaxed text-[#604B3B]/80">
+            <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 p-8 shadow-lg">
+              <h2 className="mb-4 text-2xl font-bold text-white">Giới thiệu</h2>
+              <p className="whitespace-pre-line leading-relaxed text-white/80">
                 {podcast.description}
               </p>
             </div>
 
             {/* Tags */}
             {podcast.tags && podcast.tags.length > 0 && (
-              <div className="rounded-2xl bg-white p-8 shadow-lg">
-                <h3 className="mb-4 text-xl font-bold text-[#604B3B]">Tags</h3>
+              <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 p-8 shadow-lg">
+                <h3 className="mb-4 text-xl font-bold text-white">Tags</h3>
                 <div className="flex flex-wrap gap-2">
                   {podcast.tags.map((tag, index) => (
                     <span
                       key={index}
-                      className="rounded-full bg-[#FBE7BA]/50 px-4 py-2 text-sm font-medium text-[#604B3B] transition-colors hover:bg-[#FBE7BA]"
+                      className="rounded-full bg-white/20 backdrop-blur-sm px-4 py-2 text-sm font-medium text-white border border-white/30 transition-colors hover:bg-white/30"
                     >
                       #{tag}
                     </span>
@@ -360,8 +399,8 @@ export default function PodcastDetailPage({ podcastId }: PodcastDetailPageProps)
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Share */}
-            <div className="rounded-2xl bg-white p-6 shadow-lg">
-              <h3 className="mb-4 text-lg font-bold text-[#604B3B]">Chia sẻ</h3>
+            <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 p-6 shadow-lg">
+              <h3 className="mb-4 text-lg font-bold text-white">Chia sẻ</h3>
               <div className="space-y-2">
                 <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1877F2] px-4 py-3 font-medium text-white transition-transform hover:scale-105">
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -385,11 +424,12 @@ export default function PodcastDetailPage({ podcastId }: PodcastDetailPageProps)
             </div>
 
             {/* Related (placeholder) */}
-            <div className="rounded-2xl bg-white p-6 shadow-lg">
-              <h3 className="mb-4 text-lg font-bold text-[#604B3B]">Podcast liên quan</h3>
-              <p className="text-sm text-[#604B3B]/60">Đang cập nhật...</p>
+            <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 p-6 shadow-lg">
+              <h3 className="mb-4 text-lg font-bold text-white">Podcast liên quan</h3>
+              <p className="text-sm text-white/60">Đang cập nhật...</p>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

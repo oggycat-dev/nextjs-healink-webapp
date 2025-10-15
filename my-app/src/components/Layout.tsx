@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import { authService } from "@/services/auth.service";
+import { useState, useEffect } from "react";
 import EnvStatus from "./EnvStatus";
 
 const navLinks = [
@@ -50,6 +52,29 @@ interface LayoutProps {
 export default function Layout({ children, showSearch = true }: LayoutProps) {
   const { isAuthenticated, user, logout } = useAuth();
   const router = useRouter();
+  const [isContentCreator, setIsContentCreator] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Check if user has ContentCreator role
+  useEffect(() => {
+    if (isAuthenticated) {
+      const hasCreatorRole = authService.hasRole('ContentCreator');
+      setIsContentCreator(hasCreatorRole);
+    } else {
+      setIsContentCreator(false);
+    }
+  }, [isAuthenticated]);
+
+  // Detect scroll for header effect
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrolled = window.scrollY > 10;
+      setIsScrolled(scrolled);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -62,8 +87,30 @@ export default function Layout({ children, showSearch = true }: LayoutProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-white text-black">
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 shadow-sm border-b border-white/20 liquid-glass-header">
-        <div className="bg-[#604B3B]/95 backdrop-blur-md py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.3em] text-white sm:text-xs">
+      {/* SVG filter for glass distortion */}
+      <svg style={{ position: 'absolute', width: 0, height: 0 }} aria-hidden="true">
+        <defs>
+          <filter id="glass-distort-filter" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.016 0.028" numOctaves={4} seed={9} result="turb" />
+            <feGaussianBlur in="turb" stdDeviation="0.8" result="blur" />
+            <feDisplacementMap in="SourceGraphic" in2="blur" scale={26} xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+      </svg>
+
+      <header 
+        className={`sticky top-0 z-50 liquid-glass-header ${isScrolled ? 'scrolled' : ''}`}
+        style={{ 
+          background: 'var(--glass-bg)',
+          borderBottom: '1px solid var(--glass-border)',
+          boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.35), 0 8px 30px rgba(0,0,0,0.08)'
+        }}
+      >
+        {/* Distortion overlay to bend background */}
+        <div className="glass-distort" />
+        {/* Backdrop tuning class to increase blur/contrast */}
+        <div className="glass-backdrop">
+        <div className="bg-[#604B3B]/10 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.3em] text-[#604B3B] sm:text-xs">
           Hành trình của cảm xúc
         </div>
 
@@ -96,16 +143,6 @@ export default function Layout({ children, showSearch = true }: LayoutProps) {
             </nav>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-              {showSearch && (
-                <form className="flex h-10 w-full items-center gap-2 rounded-full border border-black/20 px-4 sm:w-[280px]">
-                  <Image src={utilityIcons.search} alt="Search icon" width={20} height={20} />
-                  <input
-                    type="search"
-                    placeholder="Chủ đề bạn muốn nghe"
-                    className="h-full w-full bg-transparent text-sm text-black placeholder:text-[#ACACAC] focus:outline-none"
-                  />
-                </form>
-              )}
               <div className="flex items-center justify-end gap-3 text-xs font-medium sm:text-sm">
                 <Link href="/subscription" className="flex items-center gap-1.5 text-right">
                   <span>Đăng ký</span>
@@ -148,13 +185,13 @@ export default function Layout({ children, showSearch = true }: LayoutProps) {
                         >
                           Gói đăng ký
                         </Link>
-                        {/* Temporarily show for all authenticated users */}
-                        {isAuthenticated && (
+                        {/* Only show for Content Creators - Check JWT role */}
+                        {isContentCreator && (
                           <Link
                             href="/creator/dashboard"
                             className="block px-4 py-2 text-sm text-[#604B3B] font-semibold hover:bg-[#FBE7BA]/30 transition-colors border-t border-[#D0BF98]/50 mt-2 pt-2"
                           >
-                            🎙️ Quản lý nội dung của tôi
+                            Quản lý nội dung của tôi
                           </Link>
                         )}
                         <button
@@ -176,6 +213,7 @@ export default function Layout({ children, showSearch = true }: LayoutProps) {
             </div>
           </div>
         </div>
+        </div>
       </header>
 
       <main className="flex-1">
@@ -188,7 +226,7 @@ export default function Layout({ children, showSearch = true }: LayoutProps) {
             <div className="flex flex-col items-center gap-6 text-center lg:items-start lg:text-left">
               <Link href="/" className="flex items-center gap-4">
                 <div className="h-16 w-16 rounded-2xl bg-white flex items-center justify-center shadow-sm">
-                  <Image src="/icons/healink-chain-logo.svg" alt="Healink logo" width={45} height={45} />
+                  <Image src="/icons/logo.png" alt="Healink logo" width={45} height={45} />
                 </div>
                 <div>
                   <p className="text-2xl font-extrabold text-[#000000]">

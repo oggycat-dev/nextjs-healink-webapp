@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { podcastService } from "@/services/podcast.service";
 import Image from "next/image";
 import type { PodcastItem } from "@/types/podcast.types";
 
@@ -10,7 +13,10 @@ interface AudioPlayerProps {
 }
 
 export default function AudioPlayer({ podcast, onClose }: AudioPlayerProps) {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const audioRef = useRef<HTMLAudioElement>(null);
+  const viewTrackedRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -37,6 +43,14 @@ export default function AudioPlayer({ podcast, onClose }: AudioPlayerProps) {
       audio.removeEventListener("ended", () => setIsPlaying(false));
     };
   }, []);
+
+  // Increment view count when podcast is loaded
+  useEffect(() => {
+    if (podcast && !viewTrackedRef.current) {
+      viewTrackedRef.current = true;
+      podcastService.incrementView(podcast.id);
+    }
+  }, [podcast]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
@@ -82,9 +96,23 @@ export default function AudioPlayer({ podcast, onClose }: AudioPlayerProps) {
     }
   };
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
+  const handleLike = async () => {
+    if (!isAuthenticated) {
+      router.push("/auth");
+      return;
+    }
+    
+    try {
+      // Call API to toggle like
+      const newLikeCount = await podcastService.toggleLike(podcast.id);
+      
+      // Update UI
+      setIsLiked(!isLiked);
+      setLikeCount(newLikeCount);
+    } catch (error) {
+      console.error("Failed to toggle like:", error);
+      // Optionally show error message to user
+    }
   };
 
   const skip = (seconds: number) => {
@@ -102,7 +130,21 @@ export default function AudioPlayer({ podcast, onClose }: AudioPlayerProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-gradient-to-b from-[#604B3B] via-[#6B5646] to-[#4a3a2d] flex flex-col">
+    <div className="fixed inset-0 z-[100] flex flex-col">
+      {/* Blurred Background */}
+      <div className="absolute inset-0 -z-10">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url(${podcast.thumbnailUrl || "/images/default-podcast.jpg"})`,
+            filter: 'blur(150px) saturate(0.7)',
+            transform: 'scale(1.5)',
+          }}
+        />
+        {/* Dark overlay for better readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/88 via-black/85 to-black/92" />
+      </div>
+
       {/* Audio element */}
       <audio ref={audioRef} src={podcast.audioUrl || ""} />
 

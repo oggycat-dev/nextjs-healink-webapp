@@ -43,11 +43,35 @@ export default function EditPodcastForm({ podcastId }: EditPodcastFormProps) {
   const [seriesName, setSeriesName] = useState("");
   const [transcriptUrl, setTranscriptUrl] = useState("");
   const [tags, setTags] = useState<string>("");
-  const [emotionCategories, setEmotionCategories] = useState<string[]>([]);
-  const [topicCategories, setTopicCategories] = useState<string[]>([]);
+  const [emotionCategories, setEmotionCategories] = useState<number[]>([]);
+  const [topicCategories, setTopicCategories] = useState<number[]>([]);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  const emotionOptions = ["Relaxed", "Happy", "Sad", "Motivated", "Calm", "Energetic"];
-  const topicOptions = ["Mental Health", "Wellness", "Meditation", "Sleep", "Productivity", "Relationships"];
+  const emotionOptions = [
+    { label: "Hạnh phúc", value: 1 }, // Happiness
+    { label: "Buồn bã", value: 2 }, // Sadness
+    { label: "Lo lắng", value: 3 }, // Anxiety
+    { label: "Tức giận", value: 4 }, // Anger
+    { label: "Sợ hãi", value: 5 }, // Fear
+    { label: "Yêu thương", value: 6 }, // Love
+    { label: "Hy vọng", value: 7 }, // Hope
+    { label: "Biết ơn", value: 8 }, // Gratitude
+    { label: "Chánh niệm", value: 9 }, // Mindfulness
+    { label: "Tự thương yêu", value: 10 }, // SelfCompassion
+  ];
+
+  const topicOptions = [
+    { label: "Sức khỏe tâm thần", value: 1 }, // MentalHealth
+    { label: "Mối quan hệ", value: 2 }, // Relationships
+    { label: "Tự chăm sóc", value: 3 }, // SelfCare
+    { label: "Chánh niệm", value: 4 }, // Mindfulness
+    { label: "Phát triển bản thân", value: 5 }, // PersonalGrowth
+    { label: "Cân bằng công việc", value: 6 }, // WorkLifeBalance
+    { label: "Căng thẳng", value: 7 }, // Stress
+    { label: "Trầm cảm", value: 8 }, // Depression
+    { label: "Lo âu", value: 9 }, // Anxiety
+    { label: "Trị liệu", value: 10 }, // Therapy
+  ];
 
   // Fetch podcast data
   useEffect(() => {
@@ -100,16 +124,14 @@ export default function EditPodcastForm({ podcastId }: EditPodcastFormProps) {
         }
       }
 
-      // Map emotion categories (assuming API returns numbers)
+      // Set emotion categories (already numbers from API)
       if (data.emotionCategories && data.emotionCategories.length > 0) {
-        const emotions = data.emotionCategories.map(cat => emotionOptions[cat]).filter(Boolean);
-        setEmotionCategories(emotions);
+        setEmotionCategories(data.emotionCategories);
       }
 
-      // Map topic categories
+      // Set topic categories (already numbers from API)
       if (data.topicCategories && data.topicCategories.length > 0) {
-        const topics = data.topicCategories.map(cat => topicOptions[cat]).filter(Boolean);
-        setTopicCategories(topics);
+        setTopicCategories(data.topicCategories);
       }
     } catch (err: any) {
       console.error("Error fetching podcast:", err);
@@ -184,12 +206,12 @@ export default function EditPodcastForm({ podcastId }: EditPodcastFormProps) {
         });
       }
       
-      // Add categories
+      // Add categories (convert numbers to strings for FormData)
       emotionCategories.forEach(cat => {
-        formData.append("EmotionCategories", cat);
+        formData.append("EmotionCategories", cat.toString());
       });
       topicCategories.forEach(cat => {
-        formData.append("TopicCategories", cat);
+        formData.append("TopicCategories", cat.toString());
       });
 
       const token = localStorage.getItem("accessToken");
@@ -206,8 +228,13 @@ export default function EditPodcastForm({ podcastId }: EditPodcastFormProps) {
         throw new Error(errorData.message || "Failed to update podcast");
       }
 
-      alert("✅ Podcast đã được cập nhật thành công!");
-      router.push("/creator/dashboard");
+      // Show success notification
+      setShowSuccess(true);
+      
+      // Redirect after 3 seconds
+      setTimeout(() => {
+        router.push("/creator/dashboard");
+      }, 3000);
       
     } catch (err: any) {
       console.error("Error updating podcast:", err);
@@ -218,7 +245,7 @@ export default function EditPodcastForm({ podcastId }: EditPodcastFormProps) {
     }
   };
 
-  const toggleEmotionCategory = (category: string) => {
+  const toggleEmotionCategory = (category: number) => {
     setEmotionCategories(prev =>
       prev.includes(category)
         ? prev.filter(c => c !== category)
@@ -226,7 +253,7 @@ export default function EditPodcastForm({ podcastId }: EditPodcastFormProps) {
     );
   };
 
-  const toggleTopicCategory = (category: string) => {
+  const toggleTopicCategory = (category: number) => {
     setTopicCategories(prev =>
       prev.includes(category)
         ? prev.filter(c => c !== category)
@@ -255,22 +282,62 @@ export default function EditPodcastForm({ podcastId }: EditPodcastFormProps) {
   }
 
   return (
-    <div className="py-12">
-      <div className="mx-auto max-w-4xl px-4">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#604B3B]">Chỉnh sửa Podcast</h1>
-          <p className="mt-2 text-[#604B3B]/70">
-            Cập nhật thông tin podcast của bạn
-          </p>
-        </div>
-
-        <div className="rounded-2xl bg-white p-6 shadow-lg sm:p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
-                {error}
+    <>
+      {/* Success Modal */}
+      {showSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="relative mx-4 max-w-md rounded-2xl bg-white p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
+            {/* Success Icon */}
+            <div className="mb-6 flex justify-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
+                <svg className="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
               </div>
-            )}
+            </div>
+            
+            {/* Success Message */}
+            <div className="text-center">
+              <h3 className="mb-2 text-2xl font-bold text-[#604B3B]">
+                Cập nhật thành công! ✨
+              </h3>
+              <p className="mb-1 text-[#604B3B]/80">
+                Podcast của bạn đã được cập nhật
+              </p>
+              <p className="text-sm text-[#604B3B]/60">
+                Các thay đổi đã được lưu
+              </p>
+            </div>
+
+            {/* Progress Indicator */}
+            <div className="mt-6">
+              <div className="h-1 overflow-hidden rounded-full bg-green-100">
+                <div className="h-full w-full animate-pulse bg-green-600" style={{ animation: 'progress 3s linear forwards' }}></div>
+              </div>
+              <p className="mt-2 text-center text-xs text-[#604B3B]/50">
+                Tự động chuyển trang sau 3 giây...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="py-12">
+        <div className="mx-auto max-w-4xl px-4">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-[#604B3B]">Chỉnh sửa Podcast</h1>
+            <p className="mt-2 text-[#604B3B]/70">
+              Cập nhật thông tin podcast của bạn
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-white p-6 shadow-lg sm:p-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {error && (
+                <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+                  {error}
+                </div>
+              )}
 
             {/* Title */}
             <div>
@@ -452,16 +519,16 @@ export default function EditPodcastForm({ podcastId }: EditPodcastFormProps) {
               <div className="flex flex-wrap gap-2">
                 {emotionOptions.map((emotion) => (
                   <button
-                    key={emotion}
+                    key={emotion.value}
                     type="button"
-                    onClick={() => toggleEmotionCategory(emotion)}
+                    onClick={() => toggleEmotionCategory(emotion.value)}
                     className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                      emotionCategories.includes(emotion)
+                      emotionCategories.includes(emotion.value)
                         ? "bg-[#604B3B] text-white"
                         : "bg-[#FBE7BA]/30 text-[#604B3B] hover:bg-[#FBE7BA]/50"
                     }`}
                   >
-                    {emotion}
+                    {emotion.label}
                   </button>
                 ))}
               </div>
@@ -475,16 +542,16 @@ export default function EditPodcastForm({ podcastId }: EditPodcastFormProps) {
               <div className="flex flex-wrap gap-2">
                 {topicOptions.map((topic) => (
                   <button
-                    key={topic}
+                    key={topic.value}
                     type="button"
-                    onClick={() => toggleTopicCategory(topic)}
+                    onClick={() => toggleTopicCategory(topic.value)}
                     className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                      topicCategories.includes(topic)
+                      topicCategories.includes(topic.value)
                         ? "bg-[#604B3B] text-white"
                         : "bg-[#FBE7BA]/30 text-[#604B3B] hover:bg-[#FBE7BA]/50"
                     }`}
                   >
-                    {topic}
+                    {topic.label}
                   </button>
                 ))}
               </div>
@@ -512,5 +579,13 @@ export default function EditPodcastForm({ podcastId }: EditPodcastFormProps) {
         </div>
       </div>
     </div>
+
+    <style jsx>{`
+      @keyframes progress {
+        from { width: 100%; }
+        to { width: 0%; }
+      }
+    `}</style>
+    </>
   );
 }

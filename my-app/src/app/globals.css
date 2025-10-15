@@ -66,24 +66,55 @@ html {
   }
 }
 
-/* Simple Liquid Glass Effect - không ảnh hưởng sticky */
+/* iOS 26 Liquid Glass Header Effect - Tailwind + CSS Variables */
 .liquid-glass-header {
+  /* ultra transparent base */
+  --glass-bg: color-mix(in oklab, white 7%, transparent);
+  --glass-border: color-mix(in oklab, var(--glass-bg) 50%, white);
+  --glass-contrast: 135%;
+  --glass-brightness: 112%;
+  --glass-blur: 44px; /* stronger blur */
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.liquid-glass-header .glass-backdrop {
+  backdrop-filter: blur(var(--glass-blur)) saturate(220%) contrast(var(--glass-contrast)) brightness(var(--glass-brightness));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(220%) contrast(var(--glass-contrast)) brightness(var(--glass-brightness));
+}
+
+/* Scroll effect - stronger glass */
+.liquid-glass-header.scrolled {
+  --glass-bg: color-mix(in oklab, white 20%, transparent);
+  --glass-border: color-mix(in oklab, var(--glass-bg) 92%, white);
+  --glass-contrast: 145%;
+  --glass-brightness: 114%;
+  --glass-blur: 56px;
+}
+
+/* Distortion layer element */
+.glass-distort {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  filter: url('#glass-distort-filter');
+  opacity: 0.6; /* stronger bending */
+}
+
+/* Reusable Glass Card */
+.glass-card {
+  --glass-card-bg: color-mix(in oklab, white 8%, transparent);
+  --glass-card-border: color-mix(in oklab, var(--glass-card-bg) 60%, white);
+  background: var(--glass-card-bg);
+  border: 1px solid var(--glass-card-border);
+  backdrop-filter: blur(28px) saturate(210%) contrast(130%) brightness(110%);
+  -webkit-backdrop-filter: blur(28px) saturate(210%) contrast(130%) brightness(110%);
   position: relative;
 }
 
-.liquid-glass-header::before {
+.glass-card::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.1) 0%, 
-    rgba(255, 255, 255, 0.05) 50%, 
-    rgba(255, 255, 255, 0.15) 100%);
   pointer-events: none;
-  z-index: 1;
-}
-
-.liquid-glass-header > * {
-  position: relative;
-  z-index: 2;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.45);
 }
