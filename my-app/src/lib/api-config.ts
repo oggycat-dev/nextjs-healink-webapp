@@ -96,6 +96,10 @@ export const API_ENDPOINTS = {
     DETAIL: (id: string) => `/api/user/orders/${id}`,
     CREATE: '/api/user/orders',
   },
+  // AI Recommendation endpoints (via Gateway)
+  RECOMMENDATIONS: {
+    MY_RECOMMENDATIONS: '/api/recommendations/me', // Get AI-powered podcast recommendations for current user
+  },
 } as const;
 
 // Response wrapper type matching backend

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { podcastService } from "@/services/podcast.service";
+import { recommendationService } from "@/services/recommendation.service";
 import type { PodcastItem, PodcastCategory } from "@/types/podcast.types";
 import AudioPlayer from "./AudioPlayer";
 
@@ -114,6 +115,7 @@ export default function PostcardPage() {
   
   const [trendingPodcasts, setTrendingPodcasts] = useState<PodcastItem[]>([]);
   const [newPodcasts, setNewPodcasts] = useState<PodcastItem[]>([]);
+  const [aiRecommendations, setAiRecommendations] = useState<PodcastItem[]>([]);
   const [categories, setCategories] = useState<PodcastCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [categoryPodcasts, setCategoryPodcasts] = useState<PodcastItem[]>([]);
@@ -137,8 +139,8 @@ export default function PostcardPage() {
         setIsLoading(true);
         setError(null);
 
-        // Fetch trending and new podcasts
-        const [trending, newReleases] = await Promise.all([
+        // Fetch trending, new podcasts, and AI recommendations
+        const [trending, newReleases, recommendations] = await Promise.all([
           podcastService.getTrendingPodcasts(9).catch((err) => {
             console.log("No trending podcasts:", err);
             return [];
@@ -147,10 +149,62 @@ export default function PostcardPage() {
             console.log("No new podcasts:", err);
             return [];
           }),
+          recommendationService.getMyRecommendations({ limit: 9 }).then(async (res) => {
+            console.log("🤖 AI Recommendations response:", res);
+            if (!res.isSuccess || !res.data) return [];
+            
+            // ALWAYS try to fetch full podcast details first
+            const podcasts = await Promise.all(
+              res.data.recommendations.map(async (rec) => {
+                try {
+                  // Try to fetch full podcast details from ContentService
+                  console.log(`🔍 Fetching full details for podcast: ${rec.podcastId}`);
+                  const podcast = await podcastService.getPodcastById(rec.podcastId);
+                  console.log(`✅ Successfully fetched podcast:`, {
+                    id: podcast.id,
+                    title: podcast.title,
+                    hostName: podcast.hostName,
+                    thumbnailUrl: podcast.thumbnailUrl,
+                    audioUrl: podcast.audioUrl,
+                    viewCount: podcast.viewCount,
+                    likeCount: podcast.likeCount
+                  });
+                  return podcast as PodcastItem;
+                } catch (err: any) {
+                  console.warn(`⚠️ Failed to fetch podcast ${rec.podcastId} from DB, using AI data:`, err?.message || err);
+                  // Fallback: Use AI recommendation data
+                  return {
+                    id: rec.podcastId,
+                    title: rec.title,
+                    description: rec.recommendationReason,
+                    topic: rec.topic,
+                    category: rec.category || "",
+                    duration: rec.durationMinutes ? `${rec.durationMinutes} phút` : "",
+                    thumbnailUrl: null, // Let UI handle default image
+                    audioUrl: rec.contentUrl || null,
+                    hostName: "Unknown Host",
+                    viewCount: 0,
+                    likeCount: 0,
+                    isLiked: false,
+                    createdAt: "",
+                    emotionCategories: [],
+                    topicCategories: [],
+                  } as PodcastItem;
+                }
+              })
+            );
+            
+            console.log(`✨ Loaded ${podcasts.length} AI recommendations`);
+            return podcasts;
+          }).catch((err) => {
+            console.log("❌ AI recommendations not available:", err);
+            return [];
+          }),
         ]);
 
         setTrendingPodcasts(trending);
         setNewPodcasts(newReleases);
+        setAiRecommendations(recommendations);
 
         // Try to fetch categories separately (optional)
         try {
@@ -199,6 +253,14 @@ export default function PostcardPage() {
   }, [selectedCategory]);
 
   const sections = [
+    ...(aiRecommendations.length > 0
+      ? [{ 
+          title: "Gợi ý từ AI dành cho bạn", 
+          id: "ai-recommendations", 
+          podcasts: aiRecommendations,
+          isAI: true
+        }]
+      : []),
     { title: "Podcast thịnh hành", id: "trending", podcasts: trendingPodcasts },
     { title: "Vừa ra mắt", id: "new", podcasts: newPodcasts },
     ...(selectedCategory && categoryPodcasts.length > 0
@@ -314,13 +376,27 @@ export default function PostcardPage() {
                   return null;
                 }
 
+                const isAISection = section.id === "ai-recommendations";
+                
                 return (
-                  <div key={section.id} className="space-y-8">
+                  <div key={section.id} className={`space-y-8 ${isAISection ? 'relative' : ''}`}>
+                    {/* AI Section Special Background */}
+                    {isAISection && (
+                      <div className="absolute -inset-8 -z-10 rounded-[40px] bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 opacity-40" />
+                    )}
+                    
                     {/* Section Title */}
                     <div className="flex items-center justify-between">
-                      <h2 className="flex-1 text-center text-4xl font-black text-[#000000]">
-                        {section.title}
-                      </h2>
+                      <div className="flex-1 flex flex-col items-center gap-2">
+                        <h2 className={`text-center text-4xl font-black ${isAISection ? 'bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 bg-clip-text text-transparent' : 'text-[#000000]'}`}>
+                          {section.title}
+                        </h2>
+                        {isAISection && (
+                          <p className="text-sm text-gray-600 font-medium">
+                            Được chọn riêng cho bạn dựa trên sở thích và lịch sử nghe
+                          </p>
+                        )}
+                      </div>
                       <button className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-black transition-colors duration-200 hover:bg-black hover:text-white">
                         <svg
                           className="h-6 w-6"

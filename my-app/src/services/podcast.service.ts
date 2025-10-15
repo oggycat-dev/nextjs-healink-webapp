@@ -96,17 +96,17 @@ class PodcastService {
    */
   async getPodcastById(id: string): Promise<PodcastDetail> {
     try {
-      const response = await apiClient.get<ApiResponse<PodcastDetail>>(
+      const response = await apiClient.get(
         API_ENDPOINTS.CONTENT.PODCAST_DETAIL(id)
       );
 
-      if (response.data.isSuccess && response.data.data) {
-        // Convert S3 URLs to presigned URLs
-        const podcast = await this.convertPodcastUrls(response.data.data as any);
+      // Backend returns raw podcast data (not wrapped in ApiResponse)
+      if (response.data && response.data.id) {
+        const podcast = await this.convertPodcastUrls(response.data as any);
         return podcast as PodcastDetail;
       }
 
-      throw new Error(response.data.message || 'Podcast not found');
+      throw new Error('Podcast not found');
     } catch (error) {
       throw new Error(handleApiError(error));
     }
