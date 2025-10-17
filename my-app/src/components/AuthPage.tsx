@@ -51,12 +51,6 @@ const registerFields = [
     placeholder: "name@email.com",
   },
   {
-    id: "register-phone",
-    label: "Số điện thoại",
-    type: "tel",
-    placeholder: "Nhập số điện thoại",
-  },
-  {
     id: "register-password",
     label: "Mật khẩu",
     type: "password",

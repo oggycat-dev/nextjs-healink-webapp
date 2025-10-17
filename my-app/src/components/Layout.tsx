@@ -148,10 +148,17 @@ export default function Layout({ children, showSearch = true }: LayoutProps) {
                     </button>
                     
                     {/* Dropdown menu */}
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-[#604B3B]/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-[#604B3B]/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                       <div className="p-3 border-b border-[#604B3B]/10">
-                        <p className="font-semibold text-[#604B3B] truncate">{user.fullName}</p>
-                        <p className="text-xs text-[#604B3B]/70 truncate">{user.email}</p>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-[#604B3B] truncate">{user.fullName}</p>
+                            <p className="text-xs text-[#604B3B]/70 truncate">{user.email}</p>
+                          </div>
+                          {isContentCreator && (
+                            <span className="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">Creator</span>
+                          )}
+                        </div>
                       </div>
                       <div className="py-2">
                         <Link

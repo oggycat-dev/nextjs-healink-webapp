@@ -27,6 +27,26 @@ class CreatorService {
   }
 
   /**
+   * Get creator dashboard statistics
+   */
+  async getDashboardStats(): Promise<{
+    totalPodcasts: number;
+    publishedPodcasts: number;
+    pendingPodcasts: number;
+    rejectedPodcasts: number;
+    totalViews: number;
+    totalLikes: number;
+    topPodcasts: Array<{ id: string; title: string; viewCount: number; likeCount: number; publishedAt?: string }>
+  }> {
+    try {
+      const response = await apiClient.get('/api/content/creator/podcasts/dashboard');
+      return response.data;
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  /**
    * Get my application status
    */
   async getMyApplicationStatus(): Promise<MyApplicationStatus | null> {

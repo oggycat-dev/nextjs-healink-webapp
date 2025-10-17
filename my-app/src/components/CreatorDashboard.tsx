@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import UploadPodcastForm from "./UploadPodcastForm";
+import { creatorService } from "@/services/creator.service";
 
 type TabType = "my-podcasts" | "upload" | "statistics";
 
@@ -37,6 +38,21 @@ export default function CreatorDashboard() {
   const [podcasts, setPodcasts] = useState<Podcast[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<null | {
+    totalPodcasts: number;
+    publishedPodcasts: number;
+    pendingPodcasts: number;
+    rejectedPodcasts: number;
+    totalViews: number;
+    totalLikes: number;
+    topPodcasts: Array<{ id: string; title: string; viewCount: number; likeCount: number; publishedAt?: string }>
+  }>(null);
+
+  // Filters for statistics
+  const [searchTerm, setSearchTerm] = useState("");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [seriesFilter, setSeriesFilter] = useState<string>("");
 
   // Check if user is ContentCreator
   useEffect(() => {
@@ -53,6 +69,9 @@ export default function CreatorDashboard() {
   useEffect(() => {
     if (activeTab === "my-podcasts" && isAuthenticated) {
       fetchMyPodcasts();
+    }
+    if (activeTab === "statistics" && isAuthenticated) {
+      fetchStats();
     }
   }, [activeTab, isAuthenticated]);
 
@@ -94,6 +113,19 @@ export default function CreatorDashboard() {
     } catch (err: any) {
       console.error("Error fetching podcasts:", err);
       setError(err.message || "Có lỗi xảy ra khi tải podcast");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await creatorService.getDashboardStats();
+      setStats(data);
+    } catch (err: any) {
+      setError(err.message || "Không tải được thống kê");
     } finally {
       setIsLoading(false);
     }
@@ -301,14 +333,214 @@ export default function CreatorDashboard() {
               <h2 className="mb-6 text-2xl font-bold text-[#604B3B]">
                 Thống kê
               </h2>
-              <div className="rounded-lg bg-[#FBE7BA]/20 p-8 text-center">
-                <p className="text-[#604B3B]">
-                  Thống kê về lượt nghe, lượt thích, bình luận sẽ được hiển thị ở đây...
-                </p>
+              {/* Filters */}
+              <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-4">
+                <input
+                  type="text"
+                  placeholder="Tìm theo tên podcast"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="rounded-lg border border-[#D0BF98] px-3 py-2 text-sm text-[#604B3B] focus:border-[#604B3B] focus:outline-none focus:ring-2 focus:ring-[#604B3B]/20"
+                />
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="rounded-lg border border-[#D0BF98] px-3 py-2 text-sm text-[#604B3B] focus:border-[#604B3B] focus:outline-none focus:ring-2 focus:ring-[#604B3B]/20"
+                />
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="rounded-lg border border-[#D0BF98] px-3 py-2 text-sm text-[#604B3B] focus:border-[#604B3B] focus:outline-none focus:ring-2 focus:ring-[#604B3B]/20"
+                />
+                <input
+                  type="text"
+                  placeholder="Lọc theo Series"
+                  value={seriesFilter}
+                  onChange={(e) => setSeriesFilter(e.target.value)}
+                  className="rounded-lg border border-[#D0BF98] px-3 py-2 text-sm text-[#604B3B] focus:border-[#604B3B] focus:outline-none focus:ring-2 focus:ring-[#604B3B]/20"
+                />
               </div>
+
+              {/* Compute filtered data */}
+              {(() => {
+                const inRange = (d: string | undefined) => {
+                  if (!d) return true;
+                  const t = new Date(d).getTime();
+                  if (startDate && t < new Date(startDate).getTime()) return false;
+                  if (endDate && t > new Date(endDate + "T23:59:59").getTime()) return false;
+                  return true;
+                };
+
+                const filtered = podcasts
+                  .filter(p => (!searchTerm || p.title.toLowerCase().includes(searchTerm.toLowerCase())))
+                  .filter(p => (!seriesFilter || (p.seriesName || "").toLowerCase().includes(seriesFilter.toLowerCase())))
+                  .filter(p => inRange(p.publishedAt || p.createdAt));
+
+                const topByViews = [...filtered]
+                  .sort((a, b) => b.viewCount - a.viewCount)
+                  .slice(0, 8);
+
+                // Aggregate by month (YYYY-MM) using publishedAt or createdAt
+                const buckets: Record<string, { views: number; likes: number } > = {};
+                filtered.forEach(p => {
+                  const dateStr = (p.publishedAt || p.createdAt).slice(0, 7);
+                  if (!buckets[dateStr]) buckets[dateStr] = { views: 0, likes: 0 };
+                  buckets[dateStr].views += p.viewCount || 0;
+                  buckets[dateStr].likes += p.likeCount || 0;
+                });
+                const series = Object.keys(buckets).sort().map(key => ({ key, ...buckets[key] }));
+
+                const maxView = Math.max(1, ...topByViews.map(p => p.viewCount));
+                const maxLike = Math.max(1, ...topByViews.map(p => p.likeCount));
+
+                return (
+                  <>
+                    {/* KPI cards */}
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                      <div className="rounded-xl border border-[#D0BF98] bg-white p-6">
+                        <div className="text-sm text-[#604B3B]/60">Tổng podcast (lọc)</div>
+                        <div className="mt-2 text-3xl font-bold text-[#604B3B]">{filtered.length}</div>
+                      </div>
+                      <div className="rounded-xl border border-[#D0BF98] bg-white p-6">
+                        <div className="text-sm text-[#604B3B]/60">Tổng lượt nghe (lọc)</div>
+                        <div className="mt-2 text-3xl font-bold text-[#604B3B]">{filtered.reduce((s,p)=>s+p.viewCount,0)}</div>
+                      </div>
+                      <div className="rounded-xl border border-[#D0BF98] bg-white p-6">
+                        <div className="text-sm text-[#604B3B]/60">Tổng lượt thích (lọc)</div>
+                        <div className="mt-2 text-3xl font-bold text-[#604B3B]">{filtered.reduce((s,p)=>s+p.likeCount,0)}</div>
+                      </div>
+                    </div>
+
+                    {/* Charts */}
+                    <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                      {/* Bar chart: top by views */}
+                      <div className="rounded-xl border border-[#D0BF98] bg-white p-6">
+                        <div className="mb-4 text-lg font-semibold text-[#604B3B]">Top podcast theo lượt nghe</div>
+                        {topByViews.length === 0 ? (
+                          <div className="text-[#604B3B]/70">Chưa có dữ liệu</div>
+                        ) : (
+                          <div className="space-y-3">
+                            {topByViews.map((p) => (
+                              <div key={p.id} className="">
+                                <div className="mb-1 flex items-center justify-between text-sm text-[#604B3B]">
+                                  <span className="truncate pr-2">{p.title}</span>
+                                  <span className="text-[#604B3B]/70">👁️ {p.viewCount} • ❤️ {p.likeCount}</span>
+                                </div>
+                                <div className="h-3 w-full rounded-full bg-[#FBE7BA]/50">
+                                  <div
+                                    className="h-3 rounded-full bg-[#604B3B]"
+                                    style={{ width: `${(p.viewCount / maxView) * 100}%` }}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Simple line-area chart using SVG */}
+                      <div className="rounded-xl border border-[#D0BF98] bg-white p-6">
+                        <div className="mb-4 text-lg font-semibold text-[#604B3B]">Xu hướng theo tháng (nghe & thích)</div>
+                        {series.length === 0 ? (
+                          <div className="text-[#604B3B]/70">Chưa có dữ liệu</div>
+                        ) : (
+                          <ChartArea series={series} />
+                        )}
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+              {isLoading ? (
+                <div className="py-12 text-center text-[#604B3B]/70">Đang tải...</div>
+              ) : error ? (
+                <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-600">{error}</div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div className="rounded-xl border border-[#D0BF98] bg-white p-6">
+                      <div className="text-sm text-[#604B3B]/60">Tổng podcast</div>
+                      <div className="mt-2 text-3xl font-bold text-[#604B3B]">{stats?.totalPodcasts ?? 0}</div>
+                    </div>
+                    <div className="rounded-xl border border-[#D0BF98] bg-white p-6">
+                      <div className="text-sm text-[#604B3B]/60">Tổng lượt nghe</div>
+                      <div className="mt-2 text-3xl font-bold text-[#604B3B]">{stats?.totalViews ?? 0}</div>
+                    </div>
+                    <div className="rounded-xl border border-[#D0BF98] bg-white p-6">
+                      <div className="text-sm text-[#604B3B]/60">Tổng lượt thích</div>
+                      <div className="mt-2 text-3xl font-bold text-[#604B3B]">{stats?.totalLikes ?? 0}</div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-[#D0BF98] bg-white p-6">
+                    <div className="mb-4 text-lg font-semibold text-[#604B3B]">Top podcast</div>
+                    {stats?.topPodcasts?.length ? (
+                      <div className="divide-y divide-[#FBE7BA]">
+                        {stats.topPodcasts.map((p) => (
+                          <div key={p.id} className="flex items-center justify-between py-3">
+                            <div className="truncate pr-4 text-[#604B3B]">{p.title}</div>
+                            <div className="flex gap-4 text-sm text-[#604B3B]/70">
+                              <span>👁️ {p.viewCount}</span>
+                              <span>❤️ {p.likeCount}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-[#604B3B]/70">Chưa có dữ liệu</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ChartArea({ series }: { series: Array<{ key: string; views: number; likes: number }> }) {
+  // Simple responsive SVG area/line chart
+  const width = 600;
+  const height = 220;
+  const padding = 32;
+  const maxY = Math.max(1, ...series.map(s => Math.max(s.views, s.likes)));
+
+  const xStep = (width - padding * 2) / Math.max(1, series.length - 1);
+  const y = (v: number) => height - padding - (v / maxY) * (height - padding * 2);
+
+  const path = (key: 'views' | 'likes') => {
+    return series
+      .map((s, i) => `${i === 0 ? 'M' : 'L'} ${padding + i * xStep} ${y(s[key])}`)
+      .join(' ');
+  };
+
+  return (
+    <div className="overflow-x-auto">
+      <svg width={width} height={height} className="min-w-[600px]">
+        {/* Axes */}
+        <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#D0BF98" />
+        <line x1={padding} y1={padding} x2={padding} y2={height - padding} stroke="#D0BF98" />
+
+        {/* Lines */}
+        <path d={path('views')} fill="none" stroke="#604B3B" strokeWidth={2} />
+        <path d={path('likes')} fill="none" stroke="#D0BF98" strokeWidth={2} />
+
+        {/* Points */}
+        {series.map((s, i) => (
+          <>
+            <circle key={`v-${i}`} cx={padding + i * xStep} cy={y(s.views)} r={3} fill="#604B3B" />
+            <circle key={`l-${i}`} cx={padding + i * xStep} cy={y(s.likes)} r={3} fill="#D0BF98" />
+            <text key={`t-${i}`} x={padding + i * xStep} y={height - padding + 14} textAnchor="middle" fontSize="10" fill="#604B3B">{s.key}</text>
+          </>
+        ))}
+      </svg>
+      <div className="mt-2 flex items-center gap-4 text-xs text-[#604B3B]/70">
+        <div className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#604B3B] inline-block" /> Lượt nghe</div>
+        <div className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#D0BF98] inline-block" /> Lượt thích</div>
       </div>
     </div>
   );

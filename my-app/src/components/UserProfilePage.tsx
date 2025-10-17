@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import type { UserSubscription, SubscriptionPlan } from "@/types/subscription.types";
 import type { MyApplicationStatus } from "@/types/creator.types";
 import CreatorApplicationForm from "./CreatorApplicationForm";
+import { authService } from "@/services/auth.service";
 
 type TabType = "profile" | "subscription" | "payment" | "creator";
 
@@ -162,11 +163,17 @@ export default function UserProfilePage() {
 
   if (!user) return null;
 
+  // Check creator role (from JWT or profile flag)
+  const hasCreatorRole = authService.hasRole('ContentCreator') || user.isContentCreator;
+
   const tabs = [
     { id: "profile" as TabType, label: "Thông tin cá nhân", icon: "👤" },
     { id: "subscription" as TabType, label: "Gói đăng ký", icon: "💳" },
     { id: "payment" as TabType, label: "Lịch sử thanh toán", icon: "📊" },
-    { id: "creator" as TabType, label: "Trở thành Creator", icon: "✨" },
+    // Only show "Trở thành Creator" if user is NOT a creator yet
+    ...(hasCreatorRole
+      ? []
+      : ([{ id: "creator" as TabType, label: "Trở thành Creator", icon: "✨" }] as const)),
   ];
 
   return (
@@ -217,6 +224,12 @@ export default function UserProfilePage() {
                 <div className="text-center">
                   <h2 className="text-2xl font-bold text-[#604B3B]">{user.fullName}</h2>
                   <p className="text-sm text-[#604B3B]/70">{user.email}</p>
+                  {hasCreatorRole && (
+                    <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">
+                      <span>✅</span>
+                      <span>Content Creator</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
