@@ -306,6 +306,16 @@ export const handleApiError = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<ApiResponse>;
     
+    // Special handling for login errors (401 Unauthorized)
+    if (axiosError.response?.status === 401) {
+      // Check if this is a login request by looking at the URL
+      const requestUrl = axiosError.config?.url || '';
+      if (requestUrl.includes('/login') || requestUrl.includes('/auth/login')) {
+        return 'Sai tài khoản hoặc mật khẩu';
+      }
+      return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+    }
+    
     // Check if response has error details
     if (axiosError.response?.data) {
       const { message, errors } = axiosError.response.data;

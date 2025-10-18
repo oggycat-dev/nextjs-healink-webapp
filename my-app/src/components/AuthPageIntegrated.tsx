@@ -40,7 +40,8 @@ export default function AuthPageIntegrated() {
       // Redirect to home after successful login
       router.push('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đăng nhập thất bại');
+      // Error message is already handled by handleApiError in auth service
+      setError(err instanceof Error ? err.message : 'Sai tài khoản hoặc mật khẩu');
     } finally {
       setIsSubmitting(false);
     }
