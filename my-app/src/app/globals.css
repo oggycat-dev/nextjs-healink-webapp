@@ -66,29 +66,82 @@ html {
   }
 }
 
-/* iOS 26 Liquid Glass Header Effect - Tailwind + CSS Variables */
+/* Enhanced Liquid Glass Header Effect with SVG Filters */
 .liquid-glass-header {
-  /* ultra transparent base */
-  --glass-bg: color-mix(in oklab, white 7%, transparent);
-  --glass-border: color-mix(in oklab, var(--glass-bg) 50%, white);
-  --glass-contrast: 135%;
-  --glass-brightness: 112%;
-  --glass-blur: 44px; /* stronger blur */
-  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+
+  /* Default (unscrolled) state: transparent, no blur, no distortion */
+  background-color: transparent;
+  border-bottom: 1px solid transparent;
+  box-shadow: none;
+
+  /* Smooth transition for all properties */
+  transition-property: background-color, border-color, box-shadow;
+  transition-duration: 400ms;
+  transition-timing-function: ease-out;
 }
 
-.liquid-glass-header .glass-backdrop {
-  backdrop-filter: blur(var(--glass-blur)) saturate(220%) contrast(var(--glass-contrast)) brightness(var(--glass-brightness));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(220%) contrast(var(--glass-contrast)) brightness(var(--glass-brightness));
+/* Liquid Glass Background Layer - chỉ layer này bị biến dạng */
+.liquid-glass-bg {
+  position: absolute;
+  inset: 0;
+  background-color: transparent;
+  backdrop-filter: blur(0px) saturate(100%);
+  -webkit-backdrop-filter: blur(0px) saturate(100%);
+  filter: none;
+  
+  /* Smooth transition for background effects */
+  transition-property: background-color, backdrop-filter, -webkit-backdrop-filter, filter;
+  transition-duration: 400ms;
+  transition-timing-function: ease-out;
 }
 
-/* Scroll effect - stronger glass */
+/* Edge Gradient Overlay - tạo hiệu ứng từ mép viền */
+.liquid-glass-edge-gradient {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  opacity: 0;
+  
+  /* Smooth transition */
+  transition: opacity 400ms ease-out;
+}
+
+/* Khi scroll, hiển thị gradient từ mép viền */
+.liquid-glass-header.scrolled .liquid-glass-edge-gradient {
+  opacity: 1;
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(255, 255, 255, 0.02) 5%,
+    rgba(255, 255, 255, 0.05) 15%,
+    rgba(255, 255, 255, 0.08) 30%,
+    rgba(255, 255, 255, 0.06) 70%,
+    rgba(255, 255, 255, 0.03) 85%,
+    transparent 100%
+  );
+}
+
+/* Scroll effect - enhanced liquid glass with wavy distortion chỉ cho background */
+.liquid-glass-header.scrolled .liquid-glass-bg {
+  /* BACKGROUND - trong suốt hơn nhiều */
+  background: rgba(255, 255, 255, 0.02);
+  
+  /* BACKDROP FILTER - nhẹ hơn */
+  backdrop-filter: blur(6px) saturate(140%) contrast(108%) brightness(103%);
+  -webkit-backdrop-filter: blur(6px) saturate(140%) contrast(108%) brightness(103%);
+
+  /* --- APPLY THE SVG LIQUID DISTORTION FILTER HERE --- */
+  filter: url(#header-wavy-liquid-glass);
+}
+
+/* Header border và shadow khi scroll */
 .liquid-glass-header.scrolled {
-  --glass-bg: color-mix(in oklab, white 20%, transparent);
-  --glass-border: color-mix(in oklab, var(--glass-bg) 92%, white);
-  --glass-contrast: 145%;
-  --glass-brightness: 114%;
-  --glass-blur: 56px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 /* Distortion layer element - disabled for production compatibility */

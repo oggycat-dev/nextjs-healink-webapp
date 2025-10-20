@@ -87,21 +87,70 @@ export default function Layout({ children, showSearch = true }: LayoutProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-white text-black">
+      {/* SVG Filter Definition for Edge-based Liquid Glass Effect */}
+      <svg style={{ display: 'none' }}>
+        <filter id="header-wavy-liquid-glass" x="-20%" y="-20%" width="140%" height="140%">
+          {/* Create a fractal noise pattern for wavy distortion */}
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.008 0.03"
+            numOctaves="2"
+            seed="0"
+            result="noise"
+          />
+          
+          {/* Animate the noise for a moving liquid effect */}
+          <feOffset dx="0" dy="0" in="noise">
+            <animate
+              attributeName="baseFrequency"
+              from="0.008 0.03"
+              to="0.012 0.04"
+              dur="80s"
+              repeatCount="indefinite"
+              keyTimes="0;0.5;1"
+              values="0.008 0.03;0.012 0.04;0.008 0.03"
+            />
+          </feOffset>
+          
+          {/* Apply blur to the noise for smoother distortion */}
+          <feGaussianBlur in="noise" stdDeviation="3" result="blurredNoise" />
+          
+          {/* Create edge mask for gradient effect */}
+          <feComponentTransfer in="SourceGraphic" result="edgeMask">
+            <feFuncA type="discrete" tableValues="0 0.1 0.3 0.8 0.3 0.1 0"/>
+          </feComponentTransfer>
+          
+          {/* Use the blurred noise to displace the header content */}
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="blurredNoise"
+            scale="15"
+            xChannelSelector="R"
+            yChannelSelector="G"
+            result="distorted"
+          />
+          
+          {/* Additional blur for frosted glass look */}
+          <feGaussianBlur in="distorted" stdDeviation="0.3" result="finalBlur" />
+        </filter>
+      </svg>
+
       <header 
         className={`sticky top-0 z-50 liquid-glass-header ${isScrolled ? 'scrolled' : ''}`}
-        style={{ 
-          background: 'var(--glass-bg)',
-          borderBottom: '1px solid var(--glass-border)',
-          boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.35), 0 8px 30px rgba(0,0,0,0.08)',
-          backdropFilter: 'blur(44px) saturate(210%) contrast(135%) brightness(112%)',
-          WebkitBackdropFilter: 'blur(44px) saturate(210%) contrast(135%) brightness(112%)'
-        }}
       >
-        <div className="bg-[#604B3B]/10 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.3em] text-[#604B3B] sm:text-xs">
-          Hành trình của cảm xúc
-        </div>
+        {/* Liquid Glass Background Layer */}
+        <div className="absolute inset-0 liquid-glass-bg"></div>
+        
+        {/* Edge Gradient Overlay */}
+        <div className="absolute inset-0 liquid-glass-edge-gradient"></div>
+        
+        {/* Header Content - không bị biến dạng */}
+        <div className="relative z-10">
+          <div className="bg-[#604B3B]/10 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.3em] text-[#604B3B] sm:text-xs">
+            Hành trình của cảm xúc
+          </div>
 
-        <div className="mx-auto w-full max-w-[1440px] px-6 py-3">
+          <div className="mx-auto w-full max-w-[1440px] px-6 py-3">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <Link href="/" className="flex items-center gap-3">
               <div className="hidden h-[60px] w-[60px] items-center justify-center rounded-xl bg-white lg:flex shadow-sm">
@@ -206,6 +255,7 @@ export default function Layout({ children, showSearch = true }: LayoutProps) {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </header>
 
