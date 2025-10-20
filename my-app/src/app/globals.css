@@ -83,33 +83,64 @@ html {
   transition-timing-function: ease-out;
 }
 
-/* Liquid Glass Background Layer - chỉ layer này bị biến dạng */
-.liquid-glass-bg {
+/* Blur Background Layer - chỉ backdrop-filter, không có filter khác */
+.liquid-glass-blur {
   position: absolute;
   inset: 0;
   background-color: transparent;
   backdrop-filter: blur(0px) saturate(100%);
   -webkit-backdrop-filter: blur(0px) saturate(100%);
-  filter: none;
   
-  /* Smooth transition for background effects */
-  transition-property: background-color, backdrop-filter, -webkit-backdrop-filter, filter;
+  /* GPU compositing hints */
+  will-change: backdrop-filter;
+  transform: translateZ(0);
+  
+  /* Smooth transition */
+  transition-property: backdrop-filter, -webkit-backdrop-filter;
   transition-duration: 400ms;
   transition-timing-function: ease-out;
 }
 
-/* Edge Gradient Overlay - tạo hiệu ứng từ mép viền */
+/* Liquid Glass Background Layer - chỉ background color */
+.liquid-glass-bg {
+  position: absolute;
+  inset: 0;
+  background-color: transparent;
+  
+  /* Smooth transition */
+  transition-property: background-color;
+  transition-duration: 400ms;
+  transition-timing-function: ease-out;
+}
+
+/* Edge Gradient Overlay - chỉ SVG filter */
 .liquid-glass-edge-gradient {
   position: absolute;
   inset: 0;
   background: transparent;
   opacity: 0;
+  pointer-events: none;
   
   /* Smooth transition */
   transition: opacity 400ms ease-out;
+  
+  /* GPU compositing hints */
+  will-change: filter, opacity;
+  transform: translateZ(0);
 }
 
-/* Khi scroll, hiển thị gradient từ mép viền */
+/* Scroll effect - blur layer */
+.liquid-glass-header.scrolled .liquid-glass-blur {
+  backdrop-filter: blur(12px) saturate(150%) contrast(110%) brightness(105%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%) contrast(110%) brightness(105%);
+}
+
+/* Scroll effect - background color */
+.liquid-glass-header.scrolled .liquid-glass-bg {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Scroll effect - SVG filter */
 .liquid-glass-header.scrolled .liquid-glass-edge-gradient {
   opacity: 1;
   background: linear-gradient(to bottom,
@@ -121,18 +152,8 @@ html {
     rgba(255, 255, 255, 0.03) 85%,
     transparent 100%
   );
-}
-
-/* Scroll effect - enhanced liquid glass with wavy distortion chỉ cho background */
-.liquid-glass-header.scrolled .liquid-glass-bg {
-  /* BACKGROUND - trong suốt hơn nhiều */
-  background: rgba(255, 255, 255, 0.02);
   
-  /* BACKDROP FILTER - nhẹ hơn */
-  backdrop-filter: blur(6px) saturate(140%) contrast(108%) brightness(103%);
-  -webkit-backdrop-filter: blur(6px) saturate(140%) contrast(108%) brightness(103%);
-
-  /* --- APPLY THE SVG LIQUID DISTORTION FILTER HERE --- */
+  /* Apply SVG distortion only on overlay */
   filter: url(#header-wavy-liquid-glass);
 }
 

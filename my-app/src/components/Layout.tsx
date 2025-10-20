@@ -138,10 +138,13 @@ export default function Layout({ children, showSearch = true }: LayoutProps) {
       <header 
         className={`sticky top-0 z-50 liquid-glass-header ${isScrolled ? 'scrolled' : ''}`}
       >
-        {/* Liquid Glass Background Layer */}
+        {/* Blur Background Layer - chỉ blur, không có filter */}
+        <div className="absolute inset-0 liquid-glass-blur"></div>
+        
+        {/* Liquid Glass Background Layer - chỉ background color */}
         <div className="absolute inset-0 liquid-glass-bg"></div>
         
-        {/* Edge Gradient Overlay */}
+        {/* Edge Gradient Overlay - chỉ SVG filter */}
         <div className="absolute inset-0 liquid-glass-edge-gradient"></div>
         
         {/* Header Content - không bị biến dạng */}
